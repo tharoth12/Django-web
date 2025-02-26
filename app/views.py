@@ -11,7 +11,9 @@ from app.models import (
    Testimonial,
    FrequentlyAskedQuestion,
    ContactFormlog,
-   Blog,
+   Product,
+   Author,
+   HeroSection,
 )
 # Create your views here.
 def index (request):
@@ -24,13 +26,14 @@ def index (request):
 
    faqs= FrequentlyAskedQuestion.objects.all()
 
-   recent_blogs = Blog.objects.all()
-   for blog in recent_blogs:  
-      print(f"blog : {blog}")
-      print(f"blog.created_at : {blog.created_at}")
-      print(f"blog.author : {blog.author}")
-      print(f"blog.author.last_name  : {blog.author.last_name}")
-      print(f"blog.author.country  : {blog.author.country}")
+   hero_sections = HeroSection.objects.filter(is_active=True).order_by('display_order')
+
+   recent_products = Product.objects.all()
+   for product in recent_products:  
+      print(f"product : {product}")
+      print(f"product.created_at : {product.created_at}")
+      print(f"product.author.product_name  : {product.author.product_name}")
+      print(f"product.author.country  : {product.author.country}")
       print("")
    default_value = ""
    context = {
@@ -47,7 +50,8 @@ def index (request):
       "services":services,
       "testimonials" :testimonials,
       "faqs" : faqs,
-      "recent_blogs": recent_blogs,
+      "recent_products": recent_products,
+      "hero_sections" : hero_sections,
    }
 
    return render(request, "index.html" , context)
@@ -103,22 +107,22 @@ def contact_form(request):
 
    return redirect('home') 
 
-def blog_detail(request, blog_id):
-      blog = Blog.objects.get(id= blog_id)
+def product_detail(request, product_id):
+      product = Product.objects.get(id= product_id)
 
-      recent_blogs = Blog.objects.all().exclude(id=blog_id).order_by("-created_at")[:2]
+      recent_products = Product.objects.all().exclude(id=product_id).order_by("-created_at")[:2]
       
       context = {
-         "blog" : blog,
-         "recent_blogs": recent_blogs,
+         "product" : product,
+         "recent_products": recent_products,
       }
-      return render(request , "blog_details.html" ,context)
+      return render(request , "product_details.html" ,context)
 
-def blogs(request):
+def products(request):
       
-      all_blogs = Blog.objects.all().order_by("-created_at")
-      blog_per_page = 6
-      paginator = Paginator(all_blogs, blog_per_page)
+      all_products = Product.objects.all().order_by("-created_at")
+      product_per_page = 6
+      paginator = Paginator(all_products, product_per_page)
 
       print(f"paginator.num_pages:{paginator.num_pages}")
 
@@ -127,13 +131,21 @@ def blogs(request):
       print(f"page :{page}")
 
       try:
-         blogs = paginator.page(page)  
+         products = paginator.page(page)  
       except PageNotAnInteger:
-         blogs = paginator.page(1)
+         products = paginator.page(1)
       except EmptyPage:
-         blogs = paginator.page(paginator.num_pages)
+         products = paginator.page(paginator.num_pages)
 
       context ={
-         "blogs": blogs,
+         "products": products,
       }
-      return render(request, "blogs.html", context )
+      return render(request, "products.html", context )
+
+def hero_section(request):
+   hero_sections = HeroSection.objects.filter(is_active=True).order_by('display_order')
+   
+   context ={
+      'hero_sections':hero_sections,
+   }
+   return render(request , 'hero.html', {'hero_sections': hero_sections} , context)

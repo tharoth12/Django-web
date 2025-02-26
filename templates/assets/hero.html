@@ -1,21 +1,29 @@
-{% load static %}
-  <!-- ======= Hero Section ======= -->
-  <section id="hero" class="hero">
-    <div class="container position-relative">
-      <div class="row gy-5" data-aos="fade-in">
-        <div class="col-lg-6 order-2 order-lg-1 d-flex flex-column justify-content-center text-center text-lg-start">
-          <h2>Welcome to <span>{{company_name}}</span></h2>
-          <p>Empowering Success, Inspiring Growth: Your Vision, Our Expertise.</p>
-          <div class="d-flex justify-content-center justify-content-lg-start">
-            <a href="#services" class="btn-get-started">Get Started</a>
-            <a href="{{video_url}}" class="glightbox btn-watch-video d-flex align-items-center"><i class="bi bi-play-circle"></i><span>Watch Video</span></a>
-          </div>
-        </div>
-        <div class="col-lg-6 order-1 order-lg-2">
-          <img src="{% static 'assets/img/hero-img.svg' %}" class="img-fluid" alt="" data-aos="zoom-out" data-aos-delay="100">
+{% load static %} 
+{% for hero in hero_sections %}
+<section id="hero" class="hero  d-flex align-items-center justify-content-center"
+
+  {% if hero.hero_img %}
+    style="background-image: url('{{ hero.hero_img.url }}'); background-size: cover; background-position: center; background-repeat: no-repeat;"
+  {% else %}
+    style="background: url('{% static 'assets/img/hero-img.svg' %}') no-repeat center center/cover;"
+  {% endif %}
+>
+  <!-- Debug -->
+  <div class="container position-relative d-flex h-100">
+    <div class="row gy-5 h-100">
+      <div class="col-lg-6 d-flex flex-column justify-content-center text-center text-lg-start">
+        <h2>Welcome to <span>{{ company_name }}</span></h2>
+        <p>{{ hero.tag_lines }}</p> 
+        <div class="d-flex justify-content-center justify-content-lg-start">
+          <a href="#services" class="btn-get-started">Get Started</a>
+          {% if hero.video_url %}
+            <a href="{{ hero.video_url }}" class="glightbox btn-watch-video d-flex align-items-center">
+              <i class="bi bi-play-circle"></i><span>Watch Video</span>
+            </a>
+          {% endif %}
         </div>
       </div>
-    </div>
-    </div>
-  </section>
-  <!-- End Hero Section -->
+    </div>  
+  </div>
+</section>
+{% endfor %}

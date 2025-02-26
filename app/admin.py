@@ -5,8 +5,9 @@ from app.models import (
      Testimonial ,
      FrequentlyAskedQuestion,
      ContactFormlog ,
-     Blog,
+     Product,
      Author,
+     HeroSection,
 )
 
 @admin.register(GeneralInfo)
@@ -62,19 +63,35 @@ class ContactFormlogAdmin(admin.ModelAdmin):
        'action_time',
     ]
 
-@admin.register(Blog)
-class BlogAdmin(admin.ModelAdmin):
+@admin.register(Product)
+class ProductAdmin(admin.ModelAdmin):
   
     list_display = [
        'category',
        'title',
-       'blog_image',
+       'product_image',
        'created_at',
     ]
     
 @admin.register(Author)
 class AuthorAdmin(admin.ModelAdmin):
     list_display =[
-        'first_name',
-        'last_name' ,
+        'product_name',
     ]
+@admin.register(HeroSection)
+class HeroSectionAdmin(admin.ModelAdmin):
+    list_display = ('tag_lines', 'display_order', 'is_active')  # Columns in the admin list view
+    list_editable = ('display_order', 'is_active')  # Editable fields directly in the list
+    list_filter = ('is_active',)  # Filter sidebar for active/inactive
+    search_fields = ('tag_lines',)  # Search by tagline
+    ordering = ('display_order',)  # Default sort order
+
+    # Optional: Customize the form layout
+    fieldsets = (
+        (None, {
+            'fields': ('tag_lines', 'hero_img', 'video_url')
+        }),
+        ('Status & Order', {
+            'fields': ('is_active', 'display_order'),
+        }),
+    )

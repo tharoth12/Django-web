@@ -28,7 +28,7 @@ class Service (models.Model):
         return self.title
     
 class Testimonial(models.Model):
-    user_image = models.CharField( max_length= 255 , blank =True , null = True)
+    user_image = models.ImageField( max_length= 255 , blank =True , null = True)
     star_count=[
         (1, 'One'),
         (2, 'Two'),
@@ -65,17 +65,16 @@ class ContactFormlog(models.Model):
         return self.email
 
 class Author(models.Model):
-    first_name =models.CharField(max_length=50)
-    last_name = models.CharField(max_length=50 , null=True , blank= True)
+    product_name =models.CharField(max_length=50)
     country = models.CharField(max_length=50)
     joined_at = models.DateField(null=True , blank= True)
 
     def __str__(self):
-        return self.first_name
+        return self.product_name
     
 
-class Blog(models.Model):
-    blog_image = models.CharField(max_length=255 , null=True , blank= True)
+class Product(models.Model):
+    product_image = models.FileField(max_length=255 , null=True , blank= True)
     category = models.CharField(max_length=50 , null=True , blank= True)
     title = models.CharField(max_length=255)
     author = models.ForeignKey(Author , on_delete=models.PROTECT , null= True , blank= True )
@@ -84,14 +83,21 @@ class Blog(models.Model):
 
     def __str__(self):
         return self.title
-    
 
-    
+class HeroSection(models.Model):
+    tag_lines = models.CharField(max_length=255)
+    hero_img = models.ImageField(max_length = 255 , null = True , blank = True)
+    video_url = models.URLField(blank= True , null=True)
+    is_active = models.BooleanField(default=True)
+    display_order = models.PositiveIntegerField(default=0)
 
-        
-        
+    class Meta:
+        verbose_name = "Hero Section"
+        verbose_name_plural = "Hero Sections"
+        ordering = ['display_order']
 
-        
+    def __str__(self):
+        return self.tag_lines
 
 
         

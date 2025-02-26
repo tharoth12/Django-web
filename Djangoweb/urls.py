@@ -16,16 +16,20 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
+from django.conf import settings
+from django.conf.urls.static import static
 from app.views import (
     index ,
     contact_form ,
-    blog_detail ,
-    blogs)
+    product_detail ,
+    products )
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', index  , name ="home"),
     path('contact/', contact_form, name ="contact_form"),
-    path('blog-detail/<blog_id>', blog_detail, name = "blog_detail"),
-    path('blogs/', blogs ,name ="blogs" )
+    path('product-detail/<product_id>', product_detail, name = "product_detail"),
+    path('products/', products ,name ="products" )
 ]
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
