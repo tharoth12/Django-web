@@ -1,10 +1,89 @@
 {% load static %}
-<footer id="footer" class="footer">
+<section class="footer">
+  <footer>
+    <div class="container p-4">
+      <div class="row">
+        <!-- Company Location Map -->
+        <div class="col-lg-6 col-md-12 mb-4 mb-md-0">
+          <h5 class="text-uppercase">Our Location</h5>
+          <div id="wrapper-9cd199b9cc5410cd3b1ad21cab2e54d3">
+            <div id="map-9cd199b9cc5410cd3b1ad21cab2e54d3"></div>
+            <script>
+              (function () {
+                var setting = {
+                  "query": "GV65+VQ4, Phnom Penh, Cambodia",
+                  "width": 300,
+                  "height": 200,
+                  "satellite": false,
+                  "zoom": 13,
+                  "placeId": "ChIJlfBSyA9QCTERhWSmnlzkvoI",
+                  "cid": "0x82bee45c9ea66485",
+                  "coords": [11.5121566,104.859497],
+                  "cityUrl": "/cambodia/phnom-penh",
+                  "cityAnchorText": "Map of Phnom Penh, Phnom Penh Municipality, Cambodia",
+                  "lang": "us",
+                  "queryString": "GV65+VQ4, Phnom Penh, Cambodia",
+                  "centerCoord": [11.5121566,104.859497],
+                  "id": "map-9cd199b9cc5410cd3b1ad21cab2e54d3",
+                  "embed_id": "1198876"
+                };
+                var d = document;
+                var s = d.createElement('script');
+                s.src = 'https://1map.com/js/script-for-user.js?embed_id=1198876';
+                s.async = true;
+                s.onload = function (e) {
+                  window.OneMap.initMap(setting)
+                };
+                var to = d.getElementsByTagName('script')[0];
+                to.parentNode.insertBefore(s, to);
+              })();
+            </script>
+          </div>
+        </div>
 
-    <div class="container mt-4">
-      <div class="copyright">
-        &copy; Copyright <strong><span>{{company_name}}</span></strong>. All Rights Reserved
+        <!-- Quick Links -->
+        <div class="col-lg-3 col-md-6 mb-4 mb-md-0">
+          <h5 class="text-uppercase">Links</h5>
+          <ul class="list-unstyled mb-0">
+            <li><a href="#services" class="text-body">Services</a></li>
+            <li><a href="#testimonials" class="text-body">Testimonials</a></li>
+            <li><a href="{% url 'products' %}" class="text-body">Products</a></li>
+            <li><a href="#faq" class="text-body">FAQ</a></li>
+          </ul>
+        </div>
+
+        <!-- Social Media and Contact Info -->
+        <div class="col-lg-3 col-md-6 mb-4 mb-md-0">
+          <h5 class="text-uppercase mb-0">Contact Us</h5>
+          <div class="social-links mt-3">
+            <a href="{{ facebook_url }}" class="facebook"><i class="bi bi-facebook"></i></a>
+            <a href="{{ telegram_url }}" class="telegram"><i class="bi bi-telegram"></i></a>
+          </div>
+          <div class="contact-info mt-3">
+            <p class="contact-item">
+              <i class="bi bi-telephone-fill"></i>
+              <span class="label">Phone:</span>
+              <span class="value">{{ phone }}</span>
+            </p>
+            <p class="contact-item">
+              <i class="bi bi-geo-alt-fill"></i>
+              <span class="label">Location:</span>
+              <span class="value">{{ location }}</span>
+            </p>
+            <p class="contact-item">
+              <i class="bi bi-clock-fill"></i>
+              <span class="label">Open Hours:</span>
+              <span class="value">{{ open_hours }}</span>
+            </p>
+          </div>
+        </div>
       </div>
     </div>
 
-  </footer><!-- End Footer -->
+    <!-- Copyright -->
+    <div class="text-center p-3 copyright">
+      © 2024 Copyright:
+      <a>{{company_name}}</a>
+    </div>
+  </footer>
+</section>
