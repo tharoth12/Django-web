@@ -291,7 +291,7 @@ section {
   transition: all 0.5s;
   z-index: 997;
   height: 90px;
-  background-color: var(--color-primary);
+  background-color: whitesmoke;
 }
 
 .header.sticked {
@@ -363,7 +363,7 @@ section {
     font-family: var(--font-secondary);
     font-size: 16px;
     font-weight: 600;
-    color: rgba(255, 255, 255, 0.6);
+    color:#000000;
     white-space: nowrap;
     transition: 0.3s;
     position: relative;
@@ -400,7 +400,7 @@ section {
   .navbar .active,
   .navbar .active:focus,
   .navbar li:hover>a {
-    color: #fff;
+    color:#004AAD;
   }
 
   .navbar .dropdown ul {
@@ -413,7 +413,7 @@ section {
     z-index: 99;
     opacity: 0;
     visibility: hidden;
-    background: #fff;
+    background: #000000;
     box-shadow: 0px 0px 30px rgba(127, 137, 161, 0.25);
     transition: 0.3s;
     border-radius: 4px;
@@ -565,7 +565,7 @@ section {
   }
 
   .mobile-nav-show {
-    color: rgba(255, 255, 255, 0.6);
+    color: #000000;
     font-size: 28px;
     cursor: pointer;
     line-height: 0;
@@ -1413,17 +1413,6 @@ section {
 .contact .php-email-form button[type=submit]:hover {
   background: rgba(2, 126, 190, 0.8);
 }
-
-@keyframes animate-loading {
-  0% {
-    transform: rotate(0deg);
-  }
-
-  100% {
-    transform: rotate(360deg);
-  }
-}
-
 /*--------------------------------------------------------------
 # Hero Section
 --------------------------------------------------------------*/
@@ -1433,7 +1422,7 @@ section {
   align-items: center;
   height: 80vh;
   margin: 0;
-  background-color: var(--color-primary); /* Light gray background */
+  background-color: whitesmoke; /* Light gray background */
   overflow: hidden; /* Prevent overflow issues */
 }
 
@@ -1469,7 +1458,48 @@ section {
   object-fit: cover;
 }
 
+@media (max-width: 1200px) {
+  .hero {
+    height: 70vh;
+  }
+}
 
+@media (max-width: 992px) {
+  .hero {
+    height: 60vh;
+  }
+
+  .hero .hero-banner .poster > img {
+    object-fit: contain; /* Prevent image cropping on medium screens */
+  }
+}
+
+@media (max-width: 768px) {
+  .hero {
+    height: 50vh;
+    flex-direction: column;
+  }
+
+  .hero .hero-banner {
+    flex-direction: column;
+  }
+}
+
+@media (max-width: 576px) {
+  .hero {
+    height: 40vh;
+  }
+
+  .hero .hero-banner {
+    flex-direction: column;
+  }
+
+  .hero .hero-banner .poster > img {
+    object-fit: contain;
+    max-height: 100%;
+    width: auto;
+  }
+}
 /*--------------------------------------------------------------
 # Blog
 --------------------------------------------------------------*/
