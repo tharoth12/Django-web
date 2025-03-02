@@ -108,7 +108,7 @@ def contact_form(request):
 
 def product_detail(request, product_id):
       product = Product.objects.get(id= product_id)
-      recent_products = Product.objects.all().exclude(id=product_id).order_by("-created_at")[:3]
+      recent_products = Product.objects.all().exclude(id=product_id).order_by("-created_at")[:6]
       
       context = {
          "product" : product,
