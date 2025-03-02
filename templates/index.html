@@ -1,6 +1,52 @@
 {% extends "assets/main.html" %}
 {% load static %}
 {% block mainContent %}
+<!-- ======= Recent product Posts Section ======= -->
+<section id="recent-posts" class="recent-posts sections-bg">
+  <div class="container" data-aos="fade-up">
+
+    <div class="section-header">
+      <h2>PRODUCT</h2>
+      <p>You contribute over half of your life operating. Let us help you find the right fit for you or your corporation.</p>
+    </div>
+
+    <div class="row gy-4">
+    {% for product in recent_products %}
+        <div class="col-xl-4 col-md-6">
+          <article>
+            <div class="post-img">
+              {% if  product.product_image %}
+                  <img src="{{ product.product_image.url }}" alt="{{ product.title }}" class="img-fluid">
+              {% else %}
+                  <img src="{% static 'default-image.jpg' %}" alt="Default Image" class="img-fluid">
+              {% endif %}
+          </div>
+
+            <p class="post-category">{{product.category}}</p>
+
+            <h2 class="title">
+              <a href="{% url 'product_detail' product_id=product.id%}">{{product.title}}</a>
+            </h2>
+
+            <div class="d-flex align-items-center">
+              <div class="post-meta">
+                <p class="post-product">{{product.author.product_name}}</p>
+                <p class="post-date">
+                  <time datetime="2022-01-01">{{product.created_at|date:"M j, Y"}}</time>
+                </p>
+              </div>
+            </div>
+
+        </article>
+      </div><!-- End post list item -->
+    {% endfor %}
+    </div><!-- End recent posts list -->
+    <div class="more-products-link">
+      <a href="{% url 'products' %}">Click here for more product</a>
+    </div>
+  </div>
+</section><!-- End Recent product Posts Section -->
+
 <!-- ======= Our Services Section ======= -->
 <section id="services" class="services sections-bg">
   <div class="container" data-aos="fade-up">
@@ -105,59 +151,13 @@
               </div>
             </div><!-- # Faq item-->
           {% endfor%}
-
-
         </div>
-
       </div>
     </div>
-
+    <h1 class="contact-telegram">For more questions, contact us on our Telegram 
+      <a href="{{telegram_url}}" class="telegram"><i class="bi bi-telegram"></i></a></h1>
   </div>
 </section><!-- End Frequently Asked Questions Section -->
-
-<!-- ======= Recent product Posts Section ======= -->
-<section id="recent-posts" class="recent-posts sections-bg">
-  <div class="container" data-aos="fade-up">
-
-    <div class="section-header">
-      <h2>PRODUCT</h2>
-    </div>
-
-    <div class="row gy-4">
-    {% for product in recent_products %}
-        <div class="col-xl-4 col-md-6">
-          <article>
-            <div class="post-img">
-              {% if  product.product_image %}
-                  <img src="{{ product.product_image.url }}" alt="{{ product.title }}" class="img-fluid">
-              {% else %}
-                  <img src="{% static 'default-image.jpg' %}" alt="Default Image" class="img-fluid">
-              {% endif %}
-          </div>
-
-            <p class="post-category">{{product.category}}</p>
-
-            <h2 class="title">
-              <a href="{% url 'product_detail' product_id=product.id%}">{{product.title}}</a>
-            </h2>
-
-            <div class="d-flex align-items-center">
-              <div class="post-meta">
-                <p class="post-product">{{product.author.product_name}}</p>
-                <p class="post-date">
-                  <time datetime="2022-01-01">{{product.created_at|date:"M j, Y"}}</time>
-                </p>
-              </div>
-            </div>
-
-        </article>
-      </div><!-- End post list item -->
-    {% endfor %}
-    </div><!-- End recent posts list -->
-
-  </div>
-</section><!-- End Recent product Posts Section -->
-
 <!-- ======= Contact Section ======= -->
 <section id="contact" class="contact">
   <div class="container" data-aos="fade-up">

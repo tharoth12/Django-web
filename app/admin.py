@@ -15,6 +15,7 @@ class GeneralInfoAdmin(admin.ModelAdmin):
   
     list_display = [
        'company_name',
+       'company_logo',
        'location',
        'email',
        'phone',

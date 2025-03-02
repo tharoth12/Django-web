@@ -19,9 +19,9 @@
 
 /* Colors */
 :root {
-  --color-primary: #c2185b;   
-  --color-secondary: #808080; /* Medium grey for secondary accents (e.g., text, borders) */
-  --color-default: #212121;
+  --color-default: #222222;
+  --color-primary: #004AAD;
+  --color-secondary: #f85a40;
 }
 
 /* Smooth scroll behavior */
@@ -237,11 +237,61 @@ section {
 /*--------------------------------------------------------------
 # Header
 --------------------------------------------------------------*/
+.topbar {
+  background: #01689e;
+  height: 40px;
+  font-size: 14px;
+  transition: all 0.5s;
+  color: #fff;
+  padding: 0;
+}
+
+.topbar .contact-info i {
+  font-style: normal;
+  color: #fff;
+  line-height: 0;
+}
+
+.topbar .contact-info i a,
+.topbar .contact-info i span {
+  padding-left: 5px;
+  color: #fff;
+}
+
+@media (max-width: 575px) {
+
+  .topbar .contact-info i a,
+  .topbar .contact-info i span {
+    font-size: 13px;
+  }
+}
+
+.topbar .contact-info i a {
+  line-height: 0;
+  transition: 0.3s;
+}
+
+.topbar .contact-info i a:hover {
+  color: #fff;
+  text-decoration: underline;
+}
+
+.topbar .social-links a {
+  color: rgba(255, 255, 255, 0.7);
+  line-height: 0;
+  transition: 0.3s;
+  margin-left: 20px;
+}
+
+.topbar .social-links a:hover {
+  color: #fff;
+}
+
 .header {
   transition: all 0.5s;
   z-index: 997;
   height: 90px;
-  background:var(--color-primary);
+  background-color: var(--color-primary);
 }
 
 .header.sticked {
@@ -449,7 +499,7 @@ section {
     inset: 0;
     padding: 50px 0 10px 0;
     margin: 0;
-    background: var(--color-default);
+    background: rgba(2, 126, 190, 1);
     overflow-y: auto;
     transition: 0.3s;
     z-index: 9998;
@@ -1125,7 +1175,23 @@ section {
   background: #fff;
   box-shadow: none;
 }
+.faq .contact-telegram {
+  text-align: center;
+  margin-top: 40px;
+  font-size: 24px;
+  font-weight: 700;
+  color: #007bff;
+}
 
+.faq .contact-telegram a {
+  color: #007bff;
+  text-decoration: none;
+  transition: color 0.3s ease;
+}
+
+.faq .contact-telegram a:hover {
+  color: #0056b3;
+}
 /*--------------------------------------------------------------
 # Recent Blog Posts Section
 --------------------------------------------------------------*/
@@ -1182,7 +1248,25 @@ section {
   color: #3c3c3c;
   margin-bottom: 0;
 }
+.recent-posts .more-products-link {
+  text-align: center;
+  margin-top: 20px;
+}
 
+.recent-posts .more-products-link a {
+  display: inline-block;
+  padding: 10px 20px;
+  font-size: 16px;
+  color: #fff;
+  background-color: #28A745;
+  border-radius: 4px;
+  text-decoration: none;
+  transition: background-color 0.3s ease;
+}
+
+.recent-posts .more-products-link a:hover {
+  background-color: #008080;
+}
 /*--------------------------------------------------------------
 # Contact Section
 --------------------------------------------------------------*/
@@ -1343,14 +1427,13 @@ section {
 /*--------------------------------------------------------------
 # Hero Section
 --------------------------------------------------------------*/
-/* Hero Section Styles */
 .hero {
   display: flex;
   justify-content: center;
   align-items: center;
-  height: 100vh;
+  height: 80vh;
   margin: 0;
-  background-color: #808080; /* Light gray background */
+  background-color: var(--color-primary); /* Light gray background */
   overflow: hidden; /* Prevent overflow issues */
 }
 
@@ -1385,6 +1468,7 @@ section {
   height: 100%;
   object-fit: cover;
 }
+
 
 /*--------------------------------------------------------------
 # Blog
@@ -1493,10 +1577,8 @@ section {
 
 .blog .blog-details .post-img {
   margin: -30px -30px 20px -30px;
-  overflow: hidden; 
+  overflow: hidden;
   border-radius: 10px 10px 0 0;
-  width: 100%;
-  aspect-ratio: 16/9;
 }
 
 .blog .blog-details .title {

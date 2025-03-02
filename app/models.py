@@ -4,16 +4,15 @@ from ckeditor.fields import RichTextField
 
 # Create your models here.
 class GeneralInfo(models.Model):
-    company_name = models.CharField(max_length=255 , default="Company")
+    company_name = models.CharField(max_length=255, default="Company Name")
+    company_logo = models.ImageField( max_length=255 , blank = True , null = True)
     location = models.CharField( max_length=255)
     email = models.EmailField()
     phone = models.CharField( max_length=20)
     open_hours = models.CharField(max_length=100 , blank=True, null =True)
     video_url = models.URLField(blank=True , null=True)
-    Twitter_url = models.URLField(blank=True , null=True)
+    Telegram_url = models.URLField(blank=True , null=True)
     Facebook_url = models.URLField(blank=True , null=True)
-    instagram_url = models.URLField(blank=True , null=True)
-    Linkedin_url = models.URLField(blank=True , null=True)
 
     def __str__(self):
         return self.company_name

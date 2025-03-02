@@ -28,7 +28,7 @@ def index (request):
 
    hero_sections = HeroSection.objects.filter(is_active=True).order_by('display_order')
 
-   recent_products = Product.objects.all()
+   recent_products = Product.objects.all().order_by("-created_at")[:6]
    for product in recent_products:  
       print(f"product : {product}")
       print(f"product.created_at : {product.created_at}")
@@ -37,16 +37,15 @@ def index (request):
       print("")
    default_value = ""
    context = {
+      "company_logo":getattr(general_info, "company_logo", default_value),
       "company_name":getattr(general_info, "company_name", default_value),
       "location":getattr(general_info, "location" , default_value),
       "email":getattr(general_info, "email", default_value),
       "phone":getattr(general_info , "phone",  default_value),
       "open_hours":getattr(general_info, "open_hours" , default_value),
       "video_url":getattr(general_info, "video_url" , default_value),
-      "twitter_url":getattr (general_info, "Twitter_url", default_value),
+      "telegram_url":getattr (general_info, "Telegram_url", default_value),
       "facebook_url":getattr (general_info, "Facebook_url", default_value),
-      "instagram_url":getattr(general_info, "instagram_url" ,default_value),
-      "linkedin_url":getattr(general_info, "linkedin_url" ,default_value),
       "services":services,
       "testimonials" :testimonials,
       "faqs" : faqs,
@@ -109,8 +108,7 @@ def contact_form(request):
 
 def product_detail(request, product_id):
       product = Product.objects.get(id= product_id)
-
-      recent_products = Product.objects.all().exclude(id=product_id).order_by("-created_at")[:2]
+      recent_products = Product.objects.all().exclude(id=product_id).order_by("-created_at")[:3]
       
       context = {
          "product" : product,
