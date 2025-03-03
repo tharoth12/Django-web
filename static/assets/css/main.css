@@ -1242,6 +1242,9 @@ section {
   font-weight: 600;
   margin-bottom: 5px;
 }
+.recent-posts .post-product{
+  color: #ed1c24;
+}
 
 .recent-posts .post-date {
   font-size: 14px;
