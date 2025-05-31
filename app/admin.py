@@ -78,6 +78,7 @@ class ProductAdmin(admin.ModelAdmin):
 class AuthorAdmin(admin.ModelAdmin):
     list_display =[
         'product_name',
+        'country_logo',
     ]
 @admin.register(HeroSection)
 class HeroSectionAdmin(admin.ModelAdmin):

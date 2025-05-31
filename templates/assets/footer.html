@@ -45,10 +45,10 @@
         <div class="col-lg-3 col-md-6 mb-4 mb-md-0">
           <h5 class="text-uppercase">Links</h5>
           <ul class="list-unstyled mb-0">
-            <li><a href="#services" class="text-body">Services</a></li>
-            <li><a href="#testimonials" class="text-body">Testimonials</a></li>
+            <li><a href="/#services" class="text-body">Services</a></li>
+            <li><a href="/#testimonials" class="text-body">Testimonials</a></li>
             <li><a href="{% url 'products' %}" class="text-body">Products</a></li>
-            <li><a href="#faq" class="text-body">FAQ</a></li>
+            <li><a href="/#faq" class="text-body">FAQ</a></li>
           </ul>
         </div>
 
@@ -56,24 +56,24 @@
         <div class="col-lg-3 col-md-6 mb-4 mb-md-0">
           <h5 class="text-uppercase mb-0">Contact Us</h5>
           <div class="social-links mt-3">
-            <a href="{{ facebook_url }}" class="facebook"><i class="bi bi-facebook"></i></a>
-            <a href="{{ telegram_url }}" class="telegram"><i class="bi bi-telegram"></i></a>
+            <a href="{{ general_info.Facebook_url }}" class="facebook"><i class="bi bi-facebook"></i></a>
+            <a href="{{ general_info.Telegram_url }}" class="telegram"><i class="bi bi-telegram"></i></a>
           </div>
           <div class="contact-info mt-3">
             <p class="contact-item">
               <i class="bi bi-telephone-fill"></i>
               <span class="label">Phone:</span>
-              <span class="value">{{ phone }}</span>
+              <span class="value">{{ general_info.phone }}</span>
             </p>
             <p class="contact-item">
               <i class="bi bi-geo-alt-fill"></i>
               <span class="label">Location:</span>
-              <span class="value">{{ location }}</span>
+              <span class="value">{{ general_info.location }}</span>
             </p>
             <p class="contact-item">
               <i class="bi bi-clock-fill"></i>
               <span class="label">Open Hours:</span>
-              <span class="value">{{ open_hours }}</span>
+              <span class="value">{{ general_info.open_hours }}</span>
             </p>
           </div>
         </div>
@@ -83,7 +83,7 @@
     <!-- Copyright -->
     <div class="text-center p-3 copyright">
       © 2024 Copyright:
-      <a>{{company_name}}</a>
+      <a>{{general_info.company_name}}</a>
     </div>
   </footer>
 </section>

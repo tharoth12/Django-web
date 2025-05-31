@@ -65,6 +65,7 @@ class ContactFormlog(models.Model):
 
 class Author(models.Model):
     product_name =models.CharField(max_length=50)
+    country_logo = models.ImageField( max_length=255 , blank = True , null = True)
     country = models.CharField(max_length=50)
     joined_at = models.DateField(null=True , blank= True)
 

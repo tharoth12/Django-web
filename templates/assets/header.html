@@ -3,17 +3,20 @@
 
     <div class="container-fluid container-xl d-flex align-items-center justify-content-between">
       <a href="{% url 'home' %}" class="logo d-flex align-items-center">
-        <!-- Uncomment the line below if you also wish to use an image logo -->
-        <img src="{% static 'assets/img/logo.svg' %}" alt="Company Logo">
-        <!--<h1>{{company_name}}<span>.</span></h1>-->
+        {% if general_info and general_info.company_logo %}
+            <img src="{{ general_info.company_logo.url }}" alt="{{ general_info.company_name }}">
+         {% else %}
+            <img src="{% static 'assets/img/logo.svg' %}" alt="Default Logo">
+        {% endif %}
+
       </a>
       <nav id="navbar" class="navbar">
         <ul>
           <li><a href="#hero">HOME</a></li>
+          <li><a href="{% url 'products'%}">PRODUCTS</a></li>
           <li><a href="#services">SERVICES</a></li>
           <li><a href="#testimonials">TESTIMONIALS</a></li>
           <li><a href="#faq">FAQ</a></li>
-          <li><a href="{% url 'products'%}">PRODUCTS</a></li>
           <li><a href="#contact">CONTACT</a></li>
         </ul>
       </nav><!-- .navbar -->

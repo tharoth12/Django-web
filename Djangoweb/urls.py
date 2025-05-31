@@ -22,7 +22,7 @@ from app.views import (
     index ,
     contact_form ,
     product_detail ,
-    products )
+    products,)
 
 urlpatterns = [
     path('admin/', admin.site.urls),

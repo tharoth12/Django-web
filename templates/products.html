@@ -28,37 +28,41 @@
     <div class="container" data-aos="fade-up">
   
       <div class="row gy-4 posts-list">
-        {% for product in products %}
-            <div class="col-xl-4 col-md-6">   
-            <article>
-    
-                <div class="post-img">
-                {% if product.product_image%}
-                    <img src="{{ product.product_image.url}}" alt="" class="img-fluid">
-                 {% else %}     
-                 <img src="{% static blog.blog_image %}" alt="" class="img-fluid">
-                 {% endif %}
-                </div>
-    
-                <p class="post-category">{{product.category}}</p>
-    
-                <h2 class="title">
-                  <a href="{% url 'product_detail' product_id=product.id %}">{{product.title}}</a>
-                </h2>
-    
-                <div class="d-flex align-items-center">
-                <img src="#" alt="" class="img-fluid post-author-img flex-shrink-0">
-                <div class="post-meta">
-                    <p class="post-author-list">{{blog.author.product_name}}</p>
-                    <p class="post-date">
-                    <time datetime="2022-01-01">{{product.created_at|date:"M j, Y"}}</time>
-                    </p>
-                </div>
-                </div>
-            </article>
-            </div><!-- End post list item -->
-        {% endfor %}
-      </div><!-- End blog posts list -->
+       {% for product in products %}
+<div class="col-xl-4 col-md-6">   
+  <article>
+    <div class="post-img">
+      {% if product.product_image %}
+        <img src="{{ product.product_image.url }}" alt="" class="img-fluid">
+      {% else %}     
+        <img src="{% static 'assets/img/default.jpg' %}" alt="" class="img-fluid">
+      {% endif %}
+    </div>
+
+    <p class="post-category">{{ product.category }}</p>
+
+    <h2 class="title">
+      <a href="{% url 'product_detail' product_id=product.id %}">{{ product.title }}</a>
+    </h2>
+
+    <div class="d-flex align-items-center">
+      {% if product.author.country_logo %}
+        <img src="{{ product.author.country_logo.url }}" alt="Author" class="img-fluid post-author-img flex-shrink-0">
+     {% else %}
+       <img src="{% static 'assets/img/author.png' %}" alt="Author" class="img-fluid post-author-img flex-shrink-0">
+      {% endif %}
+
+      <div class="post-meta">
+        <p class="post-author-list">{{ product.author }}</p>
+        <p class="post-date">
+          <time datetime="{{ product.created_at|date:'Y-m-d' }}">{{ product.created_at|date:"M j, Y" }}</time>
+        </p>
+      </div>
+    </div>
+  </article>
+</div>
+{% endfor %}
+
   
       <div class="blog-pagination">
         <ul class="justify-content-center">
@@ -78,3 +82,4 @@
     </div>
   </section><!-- End Blog Section -->   
 {% endblock mainContent%}
+{% include 'assets/footer.html' %}
