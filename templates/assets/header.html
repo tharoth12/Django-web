@@ -12,12 +12,12 @@
       </a>
       <nav id="navbar" class="navbar">
         <ul>
-          <li><a href="#hero">HOME</a></li>
-          <li><a href="{% url 'products'%}">PRODUCTS</a></li>
-          <li><a href="#services">SERVICES</a></li>
-          <li><a href="#testimonials">TESTIMONIALS</a></li>
-          <li><a href="#faq">FAQ</a></li>
-          <li><a href="#contact">CONTACT</a></li>
+          <li><a href="{% url 'home' %}">HOME</a></li>
+          <li><a href="{% url 'products' %}">PRODUCTS</a></li>
+          <li><a href="{% url 'home' %}#services">SERVICES</a></li>
+          <li><a href="{% url 'home' %}#testimonials">TESTIMONIALS</a></li>
+          <li><a href="{% url 'home' %}#faq">FAQ</a></li>
+          <li><a href="{% url 'home' %}#contact">CONTACT</a></li>
         </ul>
       </nav><!-- .navbar -->
 

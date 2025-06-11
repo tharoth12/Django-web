@@ -1,0 +1,243 @@
+<!-- rental_booking.html -->
+{% extends 'assets/main.html' %}
+{% load static %}
+
+{% block mainContent %}
+<div class="container rental-booking-container">
+    <!-- Back Button Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <a href="{% if product %}{% url 'product_detail' product.id %}{% else %}{% url 'products' %}{% endif %}" 
+               class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left me-2"></i>
+                Back to {% if product %}Product Details{% else %}Products{% endif %}
+            </a>
+        </div>
+    </div>
+
+    <div class="row justify-content-center">
+        {% if product %}
+        <div class="col-lg-5 mb-4">
+            <div class="card shadow-sm h-100">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Product Information</h5>
+                </div>
+                <div class="card-body">
+                    {% if product.product_image %}
+                        <img src="{{ product.product_image.url }}" class="img-fluid rounded mb-3" alt="{{ product.title }}">
+                    {% endif %}
+                    <h5 class="card-title">{{ product.title }}</h5>
+                    <div class="product-specs mt-3">
+                        <p class="mb-2">
+                            <i class="bi bi-lightning-charge text-warning"></i>
+                            <strong>Power Output:</strong> {{ product.power_output|default:"N/A" }}
+                        </p>
+                        <p class="mb-2">
+                            <i class="bi bi-fuel-pump text-primary"></i>
+                            <strong>Fuel Type:</strong> {{ product.get_fuel_type_display }}
+                        </p>
+                        {% if product.price %}
+                        <p class="mb-2">
+                            <i class="bi bi-tag-fill text-success"></i>
+                            <strong>Price:</strong> ${{ product.price }}
+                        </p>
+                        {% endif %}
+                        {% if product.rent_price %}
+                        <p class="mb-2">
+                            <i class="bi bi-calendar-check text-info"></i>
+                            <strong>Rent Price:</strong> ${{ product.rent_price }}/month
+                        </p>
+                        {% endif %}
+                        <p class="mb-2">
+                            <i class="bi bi-cpu text-secondary"></i>
+                            <strong>Machine Size (kVA):</strong> {{ product.kva|default:product.title }}
+                        </p>
+                    </div>
+                    {% if product.free_delivery or product.warranty_period %}
+                    <div class="service-features mt-3">
+                        <h6 class="text-muted">Included Services:</h6>
+                        {% if product.free_delivery %}
+                        <p class="mb-1"><i class="bi bi-truck text-success"></i> Free Delivery</p>
+                        {% endif %}
+                        {% if product.warranty_period %}
+                        <p class="mb-1"><i class="bi bi-shield-check text-primary"></i> {{ product.warranty_period }} Warranty</p>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Booking Form Card -->
+        <div class="col-lg-7">
+            <div class="card shadow">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        {% if type == 'rent' %}
+                            <i class="bi bi-calendar-check me-2"></i>Rental Request
+                        {% else %}
+                            <i class="bi bi-cart-fill me-2"></i>Purchase Request
+                        {% endif %}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                    
+                    <form method="post" class="rental-booking-form" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        <input type="hidden" name="type" value="{{ type }}">
+                        <input type="hidden" name="product_id" value="{{ product.id }}">
+                        
+                        <div class="row">
+                            <!-- Left Column -->
+                            <div class="col-md-6">
+                                <h5 class="mb-3">Customer Information</h5>
+                                
+                                <div class="mb-3">
+                                    <label for="customer_name" class="form-label">Full Name *</label>
+                                    <input type="text" class="form-control" id="customer_name" name="customer_name" required>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="phone" class="form-label">Phone Number *</label>
+                                    <input type="tel" class="form-control" id="phone" name="phone" required>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="email" class="form-label">Email *</label>
+                                    <input type="email" class="form-control" id="email" name="email" required>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="location" class="form-label">Address *</label>
+                                    <textarea class="form-control" id="location" name="location" rows="3" required></textarea>
+                                </div>
+                            </div>
+                            
+                            <!-- Right Column -->
+                            <div class="col-md-6">
+                                <h5 class="mb-3">Booking Details</h5>
+                                
+                                {% if type == 'rent' %}
+                                <div class="mb-3">
+                                    <label for="rental_period" class="form-label">Rental Period (months) *</label>
+                                    <input type="number" class="form-control" id="rental_period" name="rental_period" min="1" required>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="rental_date" class="form-label">Start Date *</label>
+                                    <input type="date" class="form-control" id="rental_date" name="rental_date" min="{{ today_date|date:'Y-m-d' }}" required>
+                                </div>
+                                {% endif %}
+                                
+                                <div class="mb-3">
+                                    <label for="payment_method" class="form-label">Payment Method *</label>
+                                    <select class="form-select" id="payment_method" name="payment_method" required>
+                                        <option value="">Select payment method</option>
+                                        <option value="cash">Cash</option>
+                                        <option value="bank_transfer">Bank Transfer</option>
+                                        <option value="credit_card">Credit Card</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="notes" class="form-label">Additional Notes</label>
+                                    <textarea class="form-control" id="notes" name="notes" rows="3"></textarea>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Optional Services Section -->
+                        <div class="optional-services mt-4">
+                            <h5 class="mb-3">Optional Services</h5>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-check mb-2">
+                                        <input class="form-check-input" type="checkbox" id="ats_panel" name="ats_panel">
+                                        <label class="form-check-label" for="ats_panel">
+                                            <i class="bi bi-lightning-charge text-warning me-1"></i>ATS Panel Installation (+$300)
+                                        </label>
+                                    </div>
+                                    <div class="form-check mb-2">
+                                        <input class="form-check-input" type="checkbox" id="onsite_technician" name="onsite_technician">
+                                        <label class="form-check-label" for="onsite_technician">
+                                            <i class="bi bi-person-workspace text-info me-1"></i>Onsite Technician Service (+$100)
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-check mb-2">
+                                        <input class="form-check-input" type="checkbox" id="power_backup_design" name="power_backup_design">
+                                        <label class="form-check-label" for="power_backup_design">
+                                            <i class="bi bi-battery-charging text-success me-1"></i>Power Backup Design (+$50)
+                                        </label>
+                                    </div>
+                                    <div class="form-check mb-2">
+                                        <input class="form-check-input" type="checkbox" id="maintenance_plan" name="maintenance_plan">
+                                        <label class="form-check-label" for="maintenance_plan">
+                                            <i class="bi bi-gear text-primary me-1"></i>Maintenance Plan (+$150/month)
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Terms and Conditions -->
+                        <div class="terms-conditions mt-4">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="terms" name="terms" required>
+                                <label class="form-check-label" for="terms">
+                                    I agree to the terms and conditions
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <!-- Submit Button -->
+                        <div class="text-center mt-4">
+                            <button type="submit" class="btn {% if type == 'rent' %}btn-success{% else %}btn-primary{% endif %} btn-lg">
+                                {% if type == 'rent' %}
+                                <i class="bi bi-calendar-check me-2"></i>Confirm Rental
+                                {% else %}
+                                <i class="bi bi-cart-fill me-2"></i>Confirm Purchase
+                                {% endif %}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Form Validation Script -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Form validation
+    const form = document.querySelector('.rental-booking-form');
+    const rentalType = '{{ type }}';
+    
+    // Set minimum date for rental date
+    const rentalDateInput = document.getElementById('rental_date');
+    if (rentalDateInput) {
+        const today = new Date().toISOString().split('T')[0];
+        rentalDateInput.min = today;
+    }
+
+    form.addEventListener('submit', function(event) {
+        if (!form.checkValidity()) {
+            event.preventDefault();
+            event.stopPropagation();
+        }
+        form.classList.add('was-validated');
+    });
+});
+</script>
+{% endblock mainContent %}

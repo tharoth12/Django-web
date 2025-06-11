@@ -1,0 +1,211 @@
+{% extends "assets/main.html" %}
+{% load static %}
+
+{% block mainContent %}
+<div class="container mt-5 mb-5">
+    <!-- Back Button -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <a href="{% url 'home' %}" class="btn btn-outline-dark">
+                <i class="bi bi-arrow-left"></i> Back to Home
+            </a>
+        </div>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow-sm">
+                <div class="card-body p-4">
+                    <h2 class="text-center mb-4">Service Request Form</h2>
+                    <p class="text-center text-muted mb-4">Fill out the form below to request our services. We'll get back to you shortly.</p>
+
+                    <form method="post" enctype="multipart/form-data" class="service-request-form">
+                        {% csrf_token %}
+                        
+                        <!-- Customer Information -->
+                        <div class="section-title mb-3">
+                            <h4><i class="bi bi-person-circle me-2"></i>Customer Information</h4>
+                        </div>
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-6">
+                                <label for="customer_name" class="form-label">Full Name *</label>
+                                <input type="text" class="form-control" id="customer_name" name="customer_name" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="phone" class="form-label">Phone Number *</label>
+                                <input type="tel" class="form-control" id="phone" name="phone" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="email" class="form-label">Email Address</label>
+                                <input type="email" class="form-control" id="email" name="email">
+                            </div>
+                            <div class="col-md-6">
+                                <label for="location" class="form-label">Location</label>
+                                <input type="text" class="form-control" id="location" name="location">
+                            </div>
+                        </div>
+
+                        <!-- Service Details -->
+                        <div class="section-title mb-3">
+                            <h4><i class="bi bi-tools me-2"></i>Service Details</h4>
+                        </div>
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-6">
+                                <label for="service_type" class="form-label">Service Type *</label>
+                                <select class="form-select" id="service_type" name="service_type" required>
+                                    <option value="">Select Service Type</option>
+                                    <option value="Maintenance" {% if initial_service_type == 'Maintenance' %}selected{% endif %}>Maintenance</option>
+                                    <option value="Repair" {% if initial_service_type == 'Repair' %}selected{% endif %}>Repair</option>
+                                    <option value="Installation" {% if initial_service_type == 'Installation' %}selected{% endif %}>Installation</option>
+                                    <option value="24/7 Repair Service with Warranty Coverage" {% if initial_service_type == '24/7 Repair Service with Warranty Coverage' %}selected{% endif %}>24/7 Repair Service with Warranty Coverage</option>
+                                    <option value="Emergency Service" {% if initial_service_type == 'Emergency Service' %}selected{% endif %}>Emergency Service</option>
+                                    <option value="Preventive Maintenance" {% if initial_service_type == 'Preventive Maintenance' %}selected{% endif %}>Preventive Maintenance</option>
+                                    <option value="Technical Support" {% if initial_service_type == 'Technical Support' %}selected{% endif %}>Technical Support</option>
+                                    <option value="Parts Replacement" {% if initial_service_type == 'Parts Replacement' %}selected{% endif %}>Parts Replacement</option>
+                                    <option value="System Upgrade" {% if initial_service_type == 'System Upgrade' %}selected{% endif %}>System Upgrade</option>
+                                    <option value="Performance Testing" {% if initial_service_type == 'Performance Testing' %}selected{% endif %}>Performance Testing</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="machine_type" class="form-label">Machine Type *</label>
+                                <select class="form-select" id="machine_type" name="machine_type" required>
+                                    <option value="">Select Machine Type</option>
+                                    {% for type in machine_types %}
+                                        <option value="{{ type }}">{{ type }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-12">
+                                <label for="issue_description" class="form-label">Issue Description *</label>
+                                <textarea class="form-control" id="issue_description" name="issue_description" rows="4" required></textarea>
+                            </div>
+                        </div>
+
+                        <!-- Schedule -->
+                        <div class="section-title mb-3">
+                            <h4><i class="bi bi-calendar-check me-2"></i>Schedule</h4>
+                        </div>
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-6">
+                                <label for="preferred_date" class="form-label">Preferred Date *</label>
+                                <input type="date" class="form-control" id="preferred_date" name="preferred_date" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="preferred_time" class="form-label">Preferred Time</label>
+                                <input type="time" class="form-control" id="preferred_time" name="preferred_time">
+                            </div>
+                            <div class="col-md-6">
+                                <label for="priority" class="form-label">Priority Level *</label>
+                                <select class="form-select" id="priority" name="priority" required>
+                                    {% for value, label in priorities %}
+                                        <option value="{{ value }}">{{ label }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Additional Options -->
+                        <div class="section-title mb-3">
+                            <h4><i class="bi bi-gear me-2"></i>Additional Options</h4>
+                        </div>
+                        <div class="row g-3 mb-4">
+                            <div class="col-12">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="onsite_technician" name="onsite_technician">
+                                    <label class="form-check-label" for="onsite_technician">
+                                        Request Onsite Technician (Additional fee may apply)
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-12">
+                                <label for="image" class="form-label">Upload Image (Optional)</label>
+                                <input type="file" class="form-control" id="image" name="image" accept="image/*">
+                            </div>
+                            <div class="col-12">
+                                <label for="notes" class="form-label">Additional Notes</label>
+                                <textarea class="form-control" id="notes" name="notes" rows="3"></textarea>
+                            </div>
+                        </div>
+
+                        <div class="text-center mt-4">
+                            <button type="submit" class="btn btn-dark btn-lg px-5">
+                                <i class="bi bi-send me-2"></i>Submit Request
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.section-title {
+    border-bottom: 2px solid #eee;
+    padding-bottom: 0.5rem;
+}
+
+.section-title h4 {
+    color: #000;
+    font-size: 1.2rem;
+    margin: 0;
+}
+
+.section-title h4 i {
+    color: #000;
+}
+
+.form-label {
+    font-weight: 500;
+    color: #000;
+}
+
+.form-control, .form-select {
+    border: 1px solid #ddd;
+    padding: 0.6rem 1rem;
+}
+
+.form-control:focus, .form-select:focus {
+    border-color: #000;
+    box-shadow: 0 0 0 0.2rem rgba(0, 0, 0, 0.25);
+}
+
+.btn-dark {
+    background: #000;
+    color: white;
+    border: none;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    transition: all 0.3s ease;
+}
+
+.btn-dark:hover {
+    background: #333;
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+.btn-dark:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.card {
+    border: none;
+    border-radius: 15px;
+}
+
+.form-check-input:checked {
+    background-color: #000;
+    border-color: #000;
+}
+
+.form-check-input:focus {
+    border-color: #000;
+    box-shadow: 0 0 0 0.2rem rgba(0, 0, 0, 0.25);
+}
+</style>
+{% endblock mainContent %} 

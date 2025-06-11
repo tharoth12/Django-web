@@ -10,37 +10,50 @@
       <p>You contribute over half of your life operating. Let us help you find the right fit for you or your corporation.</p>
     </div>
 
-    <div class="row gy-4">
-    {% for product in recent_products %}
-        <div class="col-xl-4 col-md-6">
-          <article>
-            <div class="post-img">
-              {% if  product.product_image %}
-                  <img src="{{ product.product_image.url }}" alt="{{ product.title }}" class="img-fluid">
-              {% else %}
-                  <img src="{% static 'default-image.jpg' %}" alt="Default Image" class="img-fluid">
-              {% endif %}
-          </div>
-
-            <p class="post-category">{{product.category}}</p>
-
-            <h2 class="title">
-              <a href="{% url 'product_detail' product_id=product.id%}">{{product.title}}</a>
-            </h2>
-
-            <div class="d-flex align-items-center">
-              <div class="post-meta">
-                <p class="post-product">{{product.author.product_name}}</p>
-                <p class="post-date">
-                  <time datetime="2022-01-01">{{product.created_at|date:"M j, Y"}}</time>
-                </p>
-              </div>
+    <div class="row">
+        {% for product in recent_products %}
+        <div class="col-md-4 mb-4">
+            <div class="card h-100">
+                {% if product.product_image %}
+                    <img src="{{ product.product_image.url }}" class="card-img-top" alt="{{ product.title }}">
+                {% else %}
+                    <img src="{% static 'assets/img/default.jpg' %}" class="card-img-top" alt="Default Image">
+                {% endif %}
+                <div class="card-body">
+                    <h5 class="card-title">{{ product.title }}</h5>
+                    <p class="card-text text-muted">{{ product.description|truncatewords:20 }}</p>
+                    
+                    <div class="product-pricing mb-3">
+                        {% if product.price %}
+                        <p class="product-price fw-bold text-success mb-1">
+                            <i class="bi bi-tag-fill me-1"></i>Purchase: ${{ product.price }}
+                        </p>
+                        {% endif %}
+                        {% if product.rent_price %}
+                        <p class="product-price fw-bold text-primary mb-0">
+                            <i class="bi bi-calendar-check me-1"></i>Rent: ${{ product.rent_price }}/month
+                        </p>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="d-flex gap-2">
+                        <a href="{% url 'product_detail' product.id %}" class="btn btn-outline-primary">View Details</a>
+                        {% if product.rent_price %}
+                        <a href="{% url 'rental_booking' %}?type=rent&product_id={{ product.id }}" class="btn btn-primary">
+                            <i class="bi bi-calendar-check me-1"></i>Rent
+                        </a>
+                        {% endif %}
+                        {% if product.price %}
+                        <a href="{% url 'rental_booking' %}?type=buy&product_id={{ product.id }}" class="btn btn-success">
+                            <i class="bi bi-cart-fill me-1"></i>Buy
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
             </div>
-
-        </article>
-      </div><!-- End post list item -->
-    {% endfor %}
-    </div><!-- End recent posts list -->
+        </div>
+        {% endfor %}
+    </div>
     <div class="more-products-link">
       <a href="{% url 'products' %}">Click here for more product</a>
     </div>
@@ -53,22 +66,41 @@
 
     <div class="section-header">
       <h2>Our Services</h2>
+      <p>From purchase to maintenance — we've got you covered.</p>
     </div>
 
     <div class="row gy-4" data-aos="fade-up" data-aos-delay="100">
       {% for service in services %}
         <div class="col-lg-4 col-md-6">
-          <div class="service-item  position-relative">
+          <div class="service-item position-relative {% if forloop.first %}featured-service{% endif %}">
             <div class="icon">
               <i class="{{service.icon}}"></i>
             </div>
+            {% if forloop.first %}
+              <div class="popular-badge">Most Popular</div>
+            {% endif %}
             <h3>{{service.title}}</h3>
             <p>{{service.description}}</p>
+            {% if forloop.first %}
+              <p class="service-benefit"><i class="bi bi-check-circle-fill"></i> Available 35kVA–2000kVA</p>
+            {% endif %}
+            <div class="service-cta">
+              <a href="{% url 'products' %}" class="btn btn-primary me-2">
+                <i class="bi bi-lightning-charge"></i> Learn More
+              </a>
+              {% if forloop.first %}
+                <a href="{% url 'rental_booking' %}" class="btn btn-success">
+                  <i class="bi bi-calendar-check"></i> Rent Now
+                </a>
+              {% else %}
+                <a href="{% url 'service_request' %}?service_type={{ service.title|urlencode }}" class="btn btn-outline-primary">
+                  <i class="bi bi-tools"></i> Request Service
+                </a>
+              {% endif %}
+            </div>
           </div>
         </div><!-- End Service Item -->
       {% endfor %}
-       
-
     </div>
 
   </div>
@@ -87,7 +119,7 @@
         {% for testimonial in testimonials %}
           <div class="swiper-slide">
             <div class="testimonial-wrap">
-              <div class="testimonial-item">
+              <div class="testimonial-item testimonial-card">
                 <div class="d-flex align-items-center">
                   {% if testimonial.user_image %}
                      <img src="{{testimonial.user_image.url }}" class="testimonial-img flex-shrink-0" alt="">
@@ -95,20 +127,24 @@
                      <img src="{% static testimonial.user_image %}" class="testimonial-img flex-shrink-0" alt="">
                   {% endif%}  
                   <div>
-                    <h3>{{testimonial.username}}</h3>
+                    <h3>{{testimonial.username}} <span class="verified-badge" title="Verified">&#10004;</span></h3>
                     <h4>{{testimonial.user_job_title}}</h4>
-                    <div class="stars">
+                    <div class="testimonial-stars">
                       {% for i in 'x'|ljust:testimonial.rating_count %}
                           <i class = "bi bi-star-fill"></i>
                       {% endfor %}
                     </div>
                   </div>
                 </div>
-                <p>
+                <blockquote class="testimonial-highlight">
                   <i class="bi bi-quote quote-icon-left"></i>
-                   {{testimonial.review}}
+                  <span class="short-review">{{ testimonial.review|truncatewords:30 }}</span>
+                  <span class="full-review d-none">{{ testimonial.review }}</span>
                   <i class="bi bi-quote quote-icon-right"></i>
-                </p>
+                </blockquote>
+                {% if testimonial.review|length > 200 %}
+                <button class="btn btn-link btn-sm read-more-toggle" type="button">Read More</button>
+                {% endif %}
               </div>
             </div>
           </div><!-- End testimonial item -->
@@ -239,5 +275,40 @@
 
   </div>
 </section><!-- End Contact Section -->
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  document.querySelectorAll('.read-more-toggle').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      var card = btn.closest('.testimonial-card');
+      var shortReview = card.querySelector('.short-review');
+      var fullReview = card.querySelector('.full-review');
+      if (fullReview.classList.contains('d-none')) {
+        shortReview.classList.add('d-none');
+        fullReview.classList.remove('d-none');
+        btn.textContent = 'Show Less';
+      } else {
+        shortReview.classList.remove('d-none');
+        fullReview.classList.add('d-none');
+        btn.textContent = 'Read More';
+      }
+    });
+  });
+  // FAQ toggle: allow clicking an open question to close it
+  document.querySelectorAll('.accordion-button').forEach(function(btn) {
+    btn.addEventListener('click', function(e) {
+      var target = document.querySelector(btn.getAttribute('data-bs-target'));
+      if (target && target.classList.contains('show')) {
+        // If already open, close it and prevent Bootstrap from reopening it
+        e.stopPropagation();
+        e.preventDefault();
+        var collapse = bootstrap.Collapse.getOrCreateInstance(target);
+        collapse.hide();
+      }
+      // Otherwise, let Bootstrap handle opening
+    });
+  });
+});
+</script>
 
 {% endblock mainContent %}

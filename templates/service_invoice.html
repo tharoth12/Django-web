@@ -1,0 +1,292 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>វិក្កយបត្រ | SERVICE INVOICE</title>
+    <style>
+        @font-face {
+            font-family: 'Khmer OS';
+            src: url("{% static 'fonts/KhmerOS.ttf' %}");
+        }
+    
+        body {
+            font-family: 'Khmer OS', Arial, sans-serif;
+            font-size: 12pt;
+            margin: 0;
+            padding: 0;
+            background: #fff;
+        }
+    
+        .invoice-container {
+            width: 100%;
+            margin: 0;
+            padding: 40px;
+            box-sizing: border-box;
+        }
+    
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            border-bottom: 2px solid #000;
+            padding-bottom: 10px;
+        }
+    
+        .header-address {
+            color: #004aad;
+            font-size: 11pt;
+        }
+    
+        .invoice-info {
+            border: 1px solid #000;
+            padding: 10px;
+            font-size: 12pt;
+            text-align: left;
+        }
+    
+        .title {
+            text-align: center;
+            font-size: 20pt;
+            font-weight: bold;
+            margin: 20px 0;
+        }
+    
+        .customer-box {
+            border: 1px solid #000;
+            padding: 10px;
+            margin-bottom: 20px;
+        }
+    
+        table.details {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+    
+        table.details th, table.details td {
+            border: 1px solid #000;
+            padding: 8px;
+            text-align: left;
+        }
+    
+        table.details th {
+            background-color: #f2f2f2;
+        }
+    
+        .right {
+            text-align: right;
+            white-space: nowrap;
+        }
+    
+        .payment-summary {
+            display: flex;
+            justify-content: flex-start;
+            align-items: flex-start;
+            gap: 16px;
+            margin-top: 5px;
+        }
+
+        .qr-box {
+            padding: 0;
+            width: 100px;
+            text-align: center;
+            font-size: 9pt;
+            box-sizing: border-box;
+        }
+
+        .qr-box img {
+            width: 80px;
+            height: 80px;
+            margin-bottom: 4px;
+        }
+
+        .payment-details {
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            font-size: 10pt;
+            margin-left: 8px;
+            min-width: 220px;
+        }
+
+        .payment-method-label {
+            font-size: 10pt;
+            font-weight: bold;
+            margin-bottom: 2px;
+        }
+
+        .totals {
+            width: 260px;
+            font-size: 10pt;
+            border: 2px solid #000;
+            padding: 0;
+            margin-top: 0;
+            margin-left: 12px;
+        }
+
+        .totals table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+    
+        .totals td {
+            padding: 4px 6px;
+            text-align: left;
+        }
+
+        .totals td.right {
+            text-align: right;
+        }
+    
+        .totals th {
+            background: #f2f2f2;
+            text-align: left;
+        }
+
+        .totals .grand-total-row {
+            background: #e9f5ff;
+            font-weight: bold;
+        }
+    
+        .notice {
+            margin-top: 20px;
+            font-style: italic;
+        }
+    
+        .signature {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 50px;
+            gap: 10px;
+            border: 1px solid #000;
+            padding: 18px 10px 10px 10px;
+            border-radius: 6px;
+            background: #fafbfc;
+        }
+    
+        .signature-box {
+            text-align: center;
+            width: 48%;
+        }
+    
+        .signature-line {
+            margin-top: 40px;
+            border-top: 1px solid #000;
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+<div class="invoice-container">
+    <div style="font-size: 11pt; color: #004aad; margin-bottom: 8px;">Address: #15H, Prey Pring Tboung, Chom Chao III, Por Sen Chey Phnom Penh, Cambodia. Tel: 855 16 856 460</div>
+    <div class="title kh" style="margin-top: 0;">វិក្កយបត្រ | SERVICE INVOICE</div>
+    <div style="display: flex; justify-content: flex-start; gap: 10px; margin-bottom: 12px;">
+        <div class="customer-box" style="flex: 1; min-width: 220px; padding: 6px 10px; font-size: 11pt; margin-bottom: 0;">
+            <div class="kh">អតិថិជន: {{ service_request.customer_name }}</div>
+            Name: {{ service_request.customer_name }}<br>
+            <div class="kh">អាសយដ្ឋាន: {{ service_request.location }}</div>
+            <div class="kh">ទូរស័ព្ទ: {{ service_request.phone }}</div>
+            Tel: {{ service_request.phone }}<br>
+            <div class="kh">អ៊ីមែល:</div>
+            E-mail: {{ service_request.email }}
+        </div>
+        <div class="invoice-info" style="flex: 1; min-width: 180px; padding: 6px 10px; font-size: 11pt; margin-bottom: 0;">
+            <div class="kh">លេខវិក្កយបត្រ៖ {{ invoice_number }}</div>
+            Invoice No. {{ invoice_number }}<br>
+            <div class="kh">កាលបរិច្ឆេទ៖ {{ service_request.submitted_at|date:'d - F - Y' }}</div>
+            Date: {{ service_request.submitted_at|date:'d - F - Y' }}
+        </div>
+    </div>
+    <table class="details">
+        <thead>
+        <tr>
+            <th>ល.រ<br>No.</th>
+            <th>បរិយាយសេវាកម្ម<br>Service Description</th>
+            <th>ឯកតា<br>Unit</th>
+            <th>បរិមាណ<br>Qty</th>
+            <th>តម្លៃឯកតា<br>Unit Price</th>
+            <th>តម្លៃសរុប<br>Amount</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr>
+            <td>1</td>
+            <td>{{ service_request.service_type }}<br>
+                <span style="font-size:11pt;">
+                    Machine: {{ service_request.machine_type }}<br>
+                    Priority: {{ service_request.priority|title }}<br>
+                    Onsite: {% if service_request.onsite_technician %}Yes{% else %}No{% endif %}<br>
+                    Issue: {{ service_request.issue_description }}
+                </span>
+            </td>
+            <td>Service</td>
+            <td>1.00</td>
+            <td class="right">$ {{ base_cost|floatformat:2 }}</td>
+            <td class="right">$ {{ base_cost|floatformat:2 }}</td>
+        </tr>
+        {% if service_request.onsite_technician %}
+        <tr>
+            <td>2</td>
+            <td>Onsite Technician Fee</td>
+            <td>Service</td>
+            <td>1.00</td>
+            <td class="right">$ {{ onsite_fee|floatformat:2 }}</td>
+            <td class="right">$ {{ onsite_fee|floatformat:2 }}</td>
+        </tr>
+        {% endif %}
+        {% if priority_fee > 0 %}
+        <tr>
+            <td>3</td>
+            <td>Priority Service Fee ({{ service_request.priority|title }})</td>
+            <td>Service</td>
+            <td>1.00</td>
+            <td class="right">$ {{ priority_fee|floatformat:2 }}</td>
+            <td class="right">$ {{ priority_fee|floatformat:2 }}</td>
+        </tr>
+        {% endif %}
+        </tbody>
+    </table>
+    <div class="payment-summary">
+        <div class="qr-box">
+            <img src="file:///D:/Django web/static/assets/img/QR.jpg" alt="QR Code">
+        </div>
+        <div class="payment-details">
+            <div class="payment-method-label kh">វិធីសាស្រ្តទូទាត់ប្រាក់ / Payment method</div>
+            <div>Please Transfer to: ABA Bank</div>
+            <div>Account Name: KOH THAROTH</div>
+            <div>Account No.: 003 360 695</div>
+        </div>
+        <div class="totals">
+            <table border="1" style="border-collapse: collapse; width: 100%; font-size: 10pt;">
+                <tbody>
+                    <tr>
+                        <td colspan="5" style="text-align: left;"><strong>សរុប/Sub-Total</strong></td>
+                        <td style="text-align: right;"><strong>$ {{ total_cost|floatformat:2 }}</strong></td>
+                    </tr>
+                    <tr style="background-color: #f0f0f0;" class="grand-total-row">
+                        <td colspan="5" style="text-align: left;"><strong>សរុបត្រូវបង់ / Grand Total</strong></td>
+                        <td style="text-align: right;"><strong>$ {{ total_cost|floatformat:2 }}</strong></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+    
+    <div class="notice">Full payment is required before service begins.</div>
+
+    <div class="signature">
+        <div class="signature-box">
+            អតិថិជន និងហត្ថលេខា<br>Customer's Signature & Name
+            <div class="signature-line"></div>
+            ថ្ងៃ/Date: ............/............/............
+        </div>
+        <div class="signature-box">
+            អ្នកលក់ និងហត្ថលេខា<br>Seller's Signature & Name
+            <div class="signature-line"></div>
+            ថ្ងៃ/Date: ............/............/............
+        </div>
+    </div>
+</div>
+</body>
+</html> 

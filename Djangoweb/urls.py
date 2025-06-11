@@ -19,17 +19,31 @@ from django.urls import path
 from django.conf import settings
 from django.conf.urls.static import static
 from app.views import (
-    index ,
-    contact_form ,
-    product_detail ,
-    products,)
+    index,
+    contact_form,
+    product_detail,
+    products,
+    rental_booking,
+    generate_invoice,
+    telegram_webhook,
+    service_request,
+    generate_service_invoice,
+    handle_telegram_callback,
+)
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', index  , name ="home"),
-    path('contact/', contact_form, name ="contact_form"),
-    path('product-detail/<product_id>', product_detail, name = "product_detail"),
-    path('products/', products ,name ="products" )
+    path('', index, name="home"),
+    path('contact/', contact_form, name="contact_form"),
+    path('product-detail/<product_id>', product_detail, name="product_detail"),
+    path('products/', products, name="products"),
+    path('rental-booking/', rental_booking, name='rental_booking'),
+    path('invoice/<int:booking_id>/', generate_invoice, name='generate_invoice'),
+    path('telegram/webhook/', telegram_webhook, name='telegram_webhook'),
+    path('service-request/', service_request, name='service_request'),
+    path('service/invoice/<int:service_request_id>/', generate_service_invoice, name='generate_service_invoice'),
+    path('telegram/callback/', handle_telegram_callback, name='telegram_callback'),
 ]
+
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
