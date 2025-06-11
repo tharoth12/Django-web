@@ -24,7 +24,7 @@ A modern web application built with Django for SL Power Co., Ltd. This project i
 
 1. Clone the repository:
 ```bash
-git clone [your-repository-url]
+git clone [https://github.com/tharoth12/Django-web]
 cd Djangoweb
 ```
 
@@ -36,7 +36,7 @@ source venv/bin/activate  # On Windows: venv\Scripts\activate
 
 3. Install dependencies:
 ```bash
-pip install -r requirements.txt
+pip install -r req.txt
 ```
 
 4. Set up environment variables:
