@@ -1,85 +1,135 @@
-{% extends "assets/main.html" %}
+{% extends 'assets/main.html' %}
 {% load static %}
 
 {% block mainContent %}
-<!-- ======= Breadcrumbs ======= -->
-<div class="breadcrumbs">
-    <div class="page-header d-flex align-items-center" style="background-image: url('');">
-      <div class="container position-relative">
-        <div class="row d-flex justify-content-center">
-          <div class="col-lg-6 text-center">
-            <h2>Product</h2>
-          </div>
+<div class="container mt-5">
+    <h1 class="mb-4">Our Products</h1>
+    
+    <div class="row">
+        {% for product in products %}
+        <div class="col-md-4 mb-4">
+            <div class="card h-100">
+                {% if product.product_image %}
+                    <img src="{{ product.product_image.url }}" class="card-img-top" alt="{{ product.title }}">
+                {% else %}
+                    <img src="{% static 'assets/img/default.jpg' %}" class="card-img-top" alt="Default Image">
+                {% endif %}
+                <div class="card-body">
+                    <h5 class="card-title">{{ product.title }}</h5>
+                    <p class="card-text text-muted">{{ product.description|truncatewords:20 }}</p>
+                    
+                    <div class="product-pricing mb-3">
+                        {% if product.price %}
+                        <p class="product-price fw-bold text-success mb-1">
+                            <i class="bi bi-tag-fill me-1"></i>Purchase: ${{ product.price }}
+                        </p>
+                        {% endif %}
+                        {% if product.rent_price %}
+                        <p class="product-price fw-bold text-primary mb-0">
+                            <i class="bi bi-calendar-check me-1"></i>Rent: ${{ product.rent_price }}/month
+                        </p>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="d-grid gap-2">
+                        <a href="{% url 'product_detail' product.id %}" class="btn btn-outline-primary">View Details</a>
+                        {% if product.status == 'available' %}
+                        <a href="{% url 'rental_booking' %}?type=buy&product_id={{ product.id }}" class="btn btn-buy-now">
+                            <i class="bi bi-cart-fill me-1"></i>Buy Now
+                        </a>
+                        {% endif %}
+                        {% if product.rent_price %}
+                        <a href="{% url 'rental_booking' %}?type=rent&product_id={{ product.id }}" class="btn btn-success">
+                            <i class="bi bi-calendar-check me-1"></i>Rent Now
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
         </div>
-      </div>
-    </div>
-    <nav>
-      <div class="container">
-        <ol>
-            <li><a href="{% url 'home' %}">Home</a></li>
-          <li>Product</li>
-        </ol>
-      </div>
-    </nav>
-  </div><!-- End Breadcrumbs -->
-  
-  <!-- ======= Blog Section ======= -->
-  <section id="blog" class="blog">
-    <div class="container" data-aos="fade-up">
-  
-      <div class="row gy-4 posts-list">
-       {% for product in products %}
-<div class="col-xl-4 col-md-6">   
-  <article>
-    <div class="post-img">
-      {% if product.product_image %}
-        <img src="{{ product.product_image.url }}" alt="" class="img-fluid">
-      {% else %}     
-        <img src="{% static 'assets/img/default.jpg' %}" alt="" class="img-fluid">
-      {% endif %}
+        {% endfor %}
     </div>
 
-    <p class="post-category">{{ product.category }}</p>
+    <!-- Pagination -->
+    {% if products.has_other_pages %}
+    <nav aria-label="Page navigation" class="mt-4">
+        <ul class="pagination justify-content-center">
+            {% if products.has_previous %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ products.previous_page_number }}" aria-label="Previous">
+                    <span aria-hidden="true">&laquo;</span>
+                </a>
+            </li>
+            {% endif %}
 
-    <h2 class="title">
-      <a href="{% url 'product_detail' product_id=product.id %}">{{ product.title }}</a>
-    </h2>
+            {% for num in products.paginator.page_range %}
+            <li class="page-item {% if products.number == num %}active{% endif %}">
+                <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+            </li>
+            {% endfor %}
 
-    <div class="d-flex align-items-center">
-      {% if product.author.country_logo %}
-        <img src="{{ product.author.country_logo.url }}" alt="Author" class="img-fluid post-author-img flex-shrink-0">
-     {% else %}
-       <img src="{% static 'assets/img/author.png' %}" alt="Author" class="img-fluid post-author-img flex-shrink-0">
-      {% endif %}
-
-      <div class="post-meta">
-        <p class="post-author-list">{{ product.author }}</p>
-        <p class="post-date">
-          <time datetime="{{ product.created_at|date:'Y-m-d' }}">{{ product.created_at|date:"M j, Y" }}</time>
-        </p>
-      </div>
-    </div>
-  </article>
-</div>
-{% endfor %}
-
-  
-      <div class="blog-pagination">
-        <ul class="justify-content-center">
-          {% if products.has_previous  %}
-             <li><a href="?page={{products.previous_page_number}}">previous</a></li>
-          {% endif%}
-
-          <span class="curret">
-            <li class="active "><a href="#">{{products.number}}</a></li>
-          </span>
-          {% if products.has_next  %}
-          <li><a href="?page={{products.next_page_number}}">Next</a></li>
-          {% endif%} 
+            {% if products.has_next %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ products.next_page_number }}" aria-label="Next">
+                    <span aria-hidden="true">&raquo;</span>
+                </a>
+            </li>
+            {% endif %}
         </ul>
-      </div><!-- End blog pagination -->
-  
-    </div>
-  </section><!-- End Blog Section -->   
-{% endblock mainContent%}
-{% include 'assets/footer.html' %}
+    </nav>
+    {% endif %}
+</div>
+
+<style>
+.btn-buy-now {
+    background: linear-gradient(45deg, #ff6b6b, #ff8e8e);
+    color: white;
+    border: none;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    box-shadow: 0 2px 4px rgba(255, 107, 107, 0.2);
+    transition: all 0.3s ease;
+}
+
+.btn-buy-now:hover {
+    background: linear-gradient(45deg, #ff8e8e, #ff6b6b);
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(255, 107, 107, 0.3);
+}
+
+.btn-buy-now:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 4px rgba(255, 107, 107, 0.2);
+}
+
+.card {
+    transition: transform 0.3s ease;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+}
+
+.product-price {
+    font-size: 1.1rem;
+    margin: 0;
+    display: flex;
+    align-items: center;
+}
+
+.product-price i {
+    font-size: 1rem;
+    margin-right: 5px;
+}
+
+.product-price.text-success {
+    color: #28a745 !important;
+}
+
+.product-price.text-primary {
+    color: #004aad !important;
+}
+</style>
+{% endblock mainContent %}

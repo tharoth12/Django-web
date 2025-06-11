@@ -1,0 +1,337 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>វិក្កយបត្រ | INVOICE</title>
+    <style>
+        @font-face {
+            font-family: 'Khmer OS';
+            src: url("{% static 'fonts/KhmerOS.ttf' %}");
+        }
+    
+        body {
+            font-family: 'Khmer OS', Arial, sans-serif;
+            font-size: 12pt;
+            margin: 0;
+            padding: 0;
+            background: #fff;
+        }
+    
+        .invoice-container {
+            width: 100%;
+            margin: 0;
+            padding: 40px;
+            box-sizing: border-box;
+        }
+    
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            border-bottom: 2px solid #000;
+            padding-bottom: 10px;
+        }
+    
+        .header-address {
+            color: #004aad;
+            font-size: 11pt;
+        }
+    
+        .invoice-info {
+            border: 1px solid #000;
+            padding: 10px;
+            font-size: 12pt;
+            text-align: left;
+        }
+    
+        .title {
+            text-align: center;
+            font-size: 20pt;
+            font-weight: bold;
+            margin: 20px 0;
+        }
+    
+        .customer-box {
+            border: 1px solid #000;
+            padding: 10px;
+            margin-bottom: 20px;
+        }
+    
+        table.details {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+    
+        table.details th, table.details td {
+            border: 1px solid #000;
+            padding: 8px;
+            text-align: left;
+        }
+    
+        table.details th {
+            background-color: #f2f2f2;
+        }
+    
+        .right {
+        text-align: right;
+        white-space: nowrap;
+        }
+
+    
+        .payment-summary {
+            display: flex;
+            justify-content: flex-start;
+            align-items: flex-start;
+            gap: 16px;
+            margin-top: 5px;
+        }
+
+        .qr-box {
+            padding: 0;
+            width: 100px;
+            text-align: center;
+            font-size: 9pt;
+            box-sizing: border-box;
+        }
+
+        .qr-box img {
+            width: 80px;
+            height: 80px;
+            margin-bottom: 4px;
+        }
+
+        .payment-details {
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            font-size: 10pt;
+            margin-left: 8px;
+            min-width: 220px;
+        }
+
+        .payment-method-label {
+            font-size: 10pt;
+            font-weight: bold;
+            margin-bottom: 2px;
+        }
+
+        .totals {
+            width: 260px;
+            font-size: 10pt;
+            border: 2px solid #000;
+            padding: 0;
+            margin-top: 0;
+            margin-left: 12px;
+        }
+
+        .totals table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+    
+        .totals td {
+            padding: 4px 6px;
+            text-align: left;
+        }
+
+        .totals td.right {
+            text-align: right;
+        }
+
+    
+        .totals th {
+            background: #f2f2f2;
+            text-align: left;
+        }
+
+        .totals .grand-total-row {
+            background: #e9f5ff;
+            font-weight: bold;
+        }
+    
+        .notice {
+            margin-top: 20px;
+            font-style: italic;
+        }
+    
+        .signature {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 50px;
+            gap: 10px;
+            border: 1px solid #000;
+            padding: 18px 10px 10px 10px;
+            border-radius: 6px;
+            background: #fafbfc;
+        }
+    
+        .signature-box {
+            text-align: center;
+            width: 48%;
+        }
+    
+        .signature-line {
+            margin-top: 40px;
+            border-top: 1px solid #000;
+            width: 100%;
+        }
+        .totals {
+        width: 340px;
+        border: 2px solid #000;
+        padding: 0;
+        font-size: 11pt;
+}
+
+    </style>
+    
+</head>
+<body>
+<div class="invoice-container">
+    <div style="font-size: 11pt; color: #004aad; margin-bottom: 8px;">Address: #15H, Prey Pring Tboung, Chom Chao III, Por Sen Chey Phnom Penh, Cambodia. Tel: 855 16 856 460</div>
+    <div class="title kh" style="margin-top: 0;">វិក្កយបត្រ | INVOICE</div>
+    <div style="display: flex; justify-content: flex-start; gap: 10px; margin-bottom: 12px;">
+        <div class="customer-box" style="flex: 1; min-width: 220px; padding: 6px 10px; font-size: 11pt; margin-bottom: 0;">
+            <div class="kh">អតិថិជន: {{ booking.customer_name }}</div>
+            Name: {{ booking.customer_name }}<br>
+            <div class="kh">អាសយដ្ឋាន: {{ booking.location }}</div>
+            <div class="kh">ទូរស័ព្ទ: {{ booking.phone }}</div>
+            Tel: {{ booking.phone }}<br>
+            <div class="kh">អ៊ីមែល:</div>
+            E-mail: {{ booking.email }}
+        </div>
+        <div class="invoice-info" style="flex: 1; min-width: 180px; padding: 6px 10px; font-size: 11pt; margin-bottom: 0;">
+            <div class="kh">លេខវិក្កយបត្រ៖ {{ booking.invoice_number }}</div>
+            Invoice No. {{ booking.invoice_number }}<br>
+            <div class="kh">កាលបរិច្ឆេទ៖ {{ booking.submitted_at|date:'d - F - Y' }}</div>
+            Date: {{ booking.submitted_at|date:'d - F - Y' }}
+        </div>
+    </div>
+    <table class="details">
+        <thead>
+        <tr>
+            <th>ល.រ<br>No.</th>
+            <th>បរិយាយទំនិញ ឬ សេវាកម្ម<br>Description</th>
+            <th>ឯកតា<br>kVA</th>
+            <th>បរិមាណ<br>Qty</th>
+            <th>តម្លៃឯកតា<br>Unit Price</th>
+            <th>តម្លៃសរុប<br>Amount</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% if booking.product %}
+        <tr>
+            <td>1</td>
+            <td>{{ booking.product.title }}<br><span style="font-size:11pt;"></span></td>
+            <td>{% if booking.product.kva %}{{ booking.product.kva }}{% else %}Unit{% endif %}</td>
+            <td>1.00</td>
+            <td class="right">$ {{ booking.price|floatformat:2 }}</td>
+            <td class="right">$ {{ booking.price|floatformat:2 }}</td>
+        </tr>
+        {% endif %}
+        {% if booking.service_type %}
+        <tr>
+            <td>{% if booking.product %}2{% else %}1{% endif %}</td>
+            <td>{{ booking.service_type }}<br>
+                <span style="font-size:11pt;">
+                    Machine: {{ booking.machine_type }}<br>
+                    Priority: {{ booking.priority|title }}<br>
+                    Onsite: {% if booking.onsite_technician %}Yes{% else %}No{% endif %}
+                </span>
+            </td>
+            <td>Service</td>
+            <td>1.00</td>
+            <td class="right">$ {{ booking.onsite_fee|floatformat:2 }}</td>
+            <td class="right">$ {{ booking.onsite_fee|floatformat:2 }}</td>
+        </tr>
+        {% endif %}
+        </tbody>
+    </table>
+    <div class="payment-summary">
+        <div class="qr-box">
+            <img src="file:///D:/Django web/static/assets/img/QR.jpg" alt="QR Code">
+        </div>
+        <div class="payment-details">
+            <div class="payment-method-label kh">វិធីសាស្រ្តទូទាត់ប្រាក់ / Payment method</div>
+            <div>Please Transfer to: ABA Bank</div>
+            <div>Account Name: KOH THAROTH</div>
+            <div>Account No.: 003 360 695</div>
+        </div>
+        <div class="totals">
+            <table border="1" style="border-collapse: collapse; width: 100%; font-size: 10pt;">
+                <tbody>
+                    <tr>
+                        <td colspan="5" style="text-align: left;"><strong>សរុប/Sub-Total</strong></td>
+                        <td style="text-align: right;"><strong>$ {{ booking.price|floatformat:2 }}</strong></td>
+                    </tr>
+        
+                    {% if booking.order_type == 'buy' %}
+                        <tr>
+                            <td colspan="5" style="text-align: left;">ប្រាក់កក់ / Deposit</td>
+                            <td style="text-align: right;">$ {{ booking.deposit_amount|floatformat:2 }}</td>
+                        </tr>
+                        <tr>
+                            <td colspan="5" style="text-align: left;">បងផ្តច / Balance</td>
+                            <td style="text-align: right;">$ {{ booking.balance_amount|floatformat:2 }}</td>
+                        </tr>
+                        <tr style="background-color: #f0f0f0;">
+                            <td colspan="5" style="text-align: left;"><strong>សរុបត្រូវបង់ / Grand Total</strong></td>
+                            <td style="text-align: right;"><strong>$ {{ booking.balance_amount|floatformat:2 }}</strong></td>
+                        </tr>
+                    {% else %}
+                        <tr>
+                            <td colspan="5" style="text-align: left;">ប្រាក់កក់ / Deposit</td>
+                            <td style="text-align: right;">$ {{ booking.deposit_amount|floatformat:2 }}</td>
+                        </tr>
+                        <tr>
+                            <td colspan="5" style="text-align: left;">ប្រាក់នៅសល់ / Balance</td>
+                            <td style="text-align: right;">$ {{ booking.balance_amount|floatformat:2 }}</td>
+                        </tr>
+                        <tr style="background-color: #f0f0f0;" class="grand-total-row">
+                            <td colspan="5" style="text-align: left;"><strong>សរុបត្រូវបង់ / Grand Total</strong></td>
+                            <td style="text-align: right;"><strong>$ {{ booking.balance_amount|floatformat:2 }}</strong></td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+        
+    </div>
+    
+    {% if booking.order_type == 'buy' %}
+        <div class="notice">10% deposit required to confirm purchase.</div>
+    {% else %}
+        <div class="notice">Full payment required upfront for 1–5 month rentals.</div>
+    {% endif %}
+
+    {% if booking.order_type == 'rent' %}
+    <div class="rental-summary" style="margin: 12px 0 18px 0; font-size: 11pt;">
+        <strong>Period:</strong> {{ booking.rental_date|date:'Y-m-d' }} → {{ booking.return_date|date:'Y-m-d' }}
+        ({{ months }} month{% if months > 1 %}s{% endif %})<br>
+        <strong>Rent:</strong> ${{ booking.product.rent_price|floatformat:2 }}/month |
+        <strong>Full Price:</strong> ${{ booking.price|floatformat:2 }}<br>
+        {% if booking.ats_panel or booking.onsite_technician or booking.power_backup_design %}
+        <strong>Optional Services:</strong>
+        {% if booking.ats_panel %}ATS Panel ($300.00){% endif %}
+        {% if booking.onsite_technician %} {% if booking.ats_panel %} | {% endif %}Onsite Technician ($100.00){% endif %}
+        {% if booking.power_backup_design %} {% if booking.ats_panel or booking.onsite_technician %} | {% endif %}Power Backup Design ($50.00){% endif %}
+        {% endif %}
+    </div>
+    {% endif %}
+
+    <div class="signature">
+        <div class="signature-box">
+            អតិថិជន និងហត្ថលេខា<br>Customer's Signature & Name
+            <div class="signature-line"></div>
+            ថ្ងៃ/Date: ............/............/............
+        </div>
+        <div class="signature-box">
+            អ្នកលក់ និងហត្ថលេខា<br>Seller's Signature & Name
+            <div class="signature-line"></div>
+            ថ្ងៃ/Date: ............/............/............
+        </div>
+    </div>
+</div>
+</body>
+</html> 

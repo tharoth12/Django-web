@@ -33,12 +33,17 @@ SECRET_KEY = 'django-insecure-n3714lj&sdfv_e9qw4)z+zv@%4ugleb&bp=cwgu$@n%$%r_-&1
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [
+    '127.0.0.1',
+    'localhost',
+    '.ngrok-free.app'  # This will allow any ngrok-free.app subdomain
+]
 
 
 # Application definition
 
 INSTALLED_APPS = [
+    'jazzmin',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -145,9 +150,109 @@ STATICFILES_DIRS = [
 
 STATIC_ROOT= os.path.join(BASE_DIR , 'staticfiles')
 
-EMAIL_BACKEND ='django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'smtp.googlemail.com'
+# Email settings
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'  # Changed from smtp.googlemail.com to smtp.gmail.com
 EMAIL_PORT = 587
-EMAIL_USE_TLS =True
+EMAIL_USE_TLS = True
 EMAIL_HOST_USER = 'kohtharoth@gmail.com'
-EMAIL_HOST_PASSWORD= ('niicvfcinnfywrva')
+EMAIL_HOST_PASSWORD = 'niicvfcinnfywrva'  # Your Gmail App Password
+DEFAULT_FROM_EMAIL = 'kohtharoth@gmail.com'
+EMAIL_USE_SSL = False  # Added to ensure TLS is used instead of SSL
+
+# Telegram Bot Settings
+TELEGRAM_BOT_TOKEN = '7305787895:AAHhu9ayBrK7QkTiaI8E2dk7m8iS1UIR5OM'
+TELEGRAM_CHAT_ID = '1139756425'  # This should be your actual chat ID, not the bot token
+
+JAZZMIN_SETTINGS = {
+    "site_title": "SL Power Admin",
+    "site_header": "SL Power Dashboard",
+    "site_brand": "SL Power",
+
+    # Ensure these paths are relative to your static files setup
+    "site_logo": "assets/img/logo2.png",
+    "site_icon": "assets/img/logo2.png",  # Optional, used as favicon
+
+    "welcome_sign": "Welcome to SL Power Admin Panel",
+    "copyright": " SL Power Co., Ltd",
+
+    "show_ui_builder": True,             # Allows toggling UI tweaks
+    "navigation_expanded": True,         # Keep sidebar expanded by default
+
+    "hide_apps": [],                     # You can list apps to hide here
+    "hide_models": [],                   # You can list specific models to hide
+
+    "order_with_respect_to": [           # Controls sidebar order
+        "General infos",
+        "Products",
+        "Services",
+        "Contactformlogs",
+        "Testimonials"
+    ],
+
+    # Font Awesome icons — ensure the app labels match Django's app/model naming
+    "icons": {
+        # Django's built-in auth
+        "auth": "fas fa-users-cog",
+        "auth.user": "fas fa-user",
+        "auth.Group": "fas fa-users",
+
+        # Model-specific icons
+        "app.GeneralInfo": "fas fa-info-circle",
+        "app.Service": "fas fa-tools",
+        "app.Testimonial": "fas fa-comments",
+        "app.FrequentlyAskedQuestion": "fas fa-question-circle",
+        "app.ContactFormlog": "fas fa-envelope",
+        "app.Product": "fas fa-boxes",
+        "app.HeroSection": "fas fa-image",
+        "app.ServiceRequest": "fas fa-concierge-bell",
+        "app.RentalBooking": "fas fa-calendar-check",
+    },
+
+    "topmenu_links": [
+        {"name": "Website", "url": "/", "new_window": True},
+        {"model": "auth.User"},  # Link to User model
+    ],
+
+    "usermenu_links": [
+        {
+            "name": "Support",
+            "url": "https://t.me/your_telegram_username",  # Replace with your actual Telegram link
+            "icon": "fas fa-life-ring",
+            "new_window": True
+        }
+    ],
+}
+
+JAZZMIN_UI_TWEAKS = {
+    "navbar_small_text": False,
+    "footer_small_text": False,
+    "body_small_text": True,
+    "brand_small_text": False,
+    "brand_colour": "navbar-navy",
+    "accent": "accent-navy",
+    "navbar": "navbar-navy navbar-dark",
+    "no_navbar_border": True,
+    "navbar_fixed": False,
+    "layout_boxed": False,
+    "footer_fixed": False,
+    "sidebar_fixed": True,
+    "sidebar": "sidebar-dark-navy",
+    "sidebar_nav_small_text": False,
+    "sidebar_disable_expand": False,
+    "sidebar_nav_child_indent": True,
+    "sidebar_nav_compact_style": True,
+    "sidebar_nav_legacy_style": False,
+    "sidebar_nav_flat_style": True,
+    "theme": "lumen",
+    "dark_mode_theme": None,
+    "button_classes": {
+        "primary": "btn-outline-primary",
+        "secondary": "btn-outline-secondary",
+        "info": "btn-info",
+        "warning": "btn-warning",
+        "danger": "btn-danger",
+        "success": "btn-success"
+    },
+    "actions_sticky_top": True
+}

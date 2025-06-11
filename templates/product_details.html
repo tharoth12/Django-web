@@ -2,106 +2,294 @@
 {% load static %}
 
 {% block mainContent %}
-
-    <!-- ======= Breadcrumbs ======= -->
-    <div class="breadcrumbs">
-        <div class="page-header d-flex align-items-center" style="background-image: url('');">
-          <div class="container position-relative">
-            <div class="row d-flex justify-content-center">
-              <div class="col-lg-6 text-center">
-                <h2>Product Details</h2>
-              </div>
-            </div>
-          </div>
-        </div>
-        <nav>
-          <div class="container">
-            <ol>
-              <li><a href="{% url 'home' %}">Home</a></li>
-              <li>Product Details</li>
-            </ol>
-          </div>
-        </nav>
-      </div><!-- End Breadcrumbs -->
-  
-      <!-- ======= Blog Details Section ======= -->
-      <section id="blog" class="blog">
-        <div class="container" data-aos="fade-up">
-  
-          <div class="row g-5">
-  
-            <div class="col-lg-8">
-  
-              <article class="blog-details">
-  
-                <div class="post-img">
-                    <div class="post-img">
-                        {% if product.product_image%}
-                           <img src="{{ product.product_image.url}}" alt="" class="img-fluid">
-                        {% else %}
-                        <img src="{% static product.product_image %}" alt="" class="img-fluid">
-                        {% endif %}
-                      </div>
-                </div>
-  
-                <h2 class="title">{{product.title}}</h2>
-  
-                <div class="meta-top">
-                  <ul>
-                    <li class="d-flex align-items-center"><i class="bi bi-person"></i> <a href="#">{{product.author.name}}</a></li>
-                    <li class="d-flex align-items-center"><i class="bi bi-clock"></i> <a href="#"><time datetime="2020-01-01">{{product.created_at | date:"M j, Y"}}</time></a></li>
-                  </ul>
-                </div><!-- End meta top -->
-  
-                <div class="content">
-                  <p>
-                    {{product.content | safe}}
-                </div><!-- End post content -->
-  
-  
-              </article><!-- End blog post -->
-  
-  
-            </div>
-  
-            <div class="col-lg-4">
-  
-              <div class="sidebar">
-  
-  
-                <div class="sidebar-item recent-posts">
-  <h3 class="sidebar-title">Recent Posts</h3>
-
-  <div class="mt-4">
-    {% for recent_product in recent_products %}
-      <div class="d-flex align-items-center mb-4 border-bottom pb-3">
-        <div class="flex-shrink-0 me-3" style="width: 80px; height: 80px; overflow: hidden; border-radius: 8px;">
-          {% if recent_product.product_image %}
-            <img src="{{ recent_product.product_image.url }}" alt="{{ recent_product.title }}" class="img-fluid" style="object-fit: cover; width: 100%; height: 100%;">
-          {% else %}
-            <img src="{% static 'assets/img/default-product.png' %}" alt="{{ recent_product.title }}" class="img-fluid" style="object-fit: cover; width: 100%; height: 100%;">
-          {% endif %}
-        </div>
-        <div class="flex-grow-1">
-          <h5 class="mb-1">
-            <a href="{% url 'product_detail' product_id=recent_product.id %}" class="text-dark text-decoration-none">
-              {{ recent_product.title|truncatechars:50 }}
+<div class="container product-details-container">
+    <!-- Back Button -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <a href="{% url 'products' %}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left"></i> Back to Products
             </a>
-          </h5>
-          <small class="text-muted">
-            <i class="bi bi-clock me-1"></i>{{ recent_product.created_at|date:"M j, Y" }}
-          </small>
         </div>
-      </div>
-    {% endfor %}
-  </div>
-</div>
-
-              </div>
+    </div>
+    <!-- Product Details Header -->
+    <div class="row mb-4">
+        <div class="col-12 text-center">
+            <h2 class="fw-bold">Product Details</h2>
+        </div>
+    </div>
+    <div class="row">
+        <!-- Left Column: Product Image -->
+        <div class="col-lg-6 col-md-12 mb-4 text-center">
+            <h2 class="mb-3">{{ product.title }}</h2>
+            
+            <div class="product-image-container">
+                {% if product.product_image %}
+                    <img src="{{ product.product_image.url }}" class="img-fluid rounded shadow mb-4" alt="{{ product.title }}">
+                {% else %}
+                    <img src="{% static 'assets/img/default-product.png' %}" class="img-fluid rounded shadow mb-4" alt="Default">
+                {% endif %}
             </div>
-          </div>
-  
+            
+            <!-- Additional Images -->
+            <div class="product-additional-images">
+                {% for image in product.images.all %}
+                    <div class="col-6 mb-3">
+                        <img src="{{ image.image.url }}" class="img-fluid rounded shadow" alt="Product Image {{ forloop.counter }}">
+                    </div>
+                {% empty %}
+                    <!-- If no additional images, show the main product image twice -->
+                    <div class="col-6 mb-3">
+                        <img src="{{ product.product_image.url|default:'/static/assets/img/default-product.png' }}" class="img-fluid rounded shadow" alt="Product Image">
+                    </div>
+                    <div class="col-6 mb-3">
+                        <img src="{{ product.product_image.url|default:'/static/assets/img/default-product.png' }}" class="img-fluid rounded shadow" alt="Product Image">
+                    </div>
+                {% endfor %}
+            </div>
+
+            <div class="mt-3">
+                <!-- Static Tags/Labels -->
+                <span class="badge bg-primary me-1">#Japan</span>
+                <span class="badge bg-secondary me-1">#Mitsubishi</span>
+                <span class="badge bg-info me-1">#150KVA</span>
+                <span class="badge bg-success">#SilentGenerator</span>
+            </div>
         </div>
-      </section><!-- End Blog Details Section -->
-{% endblock mainContent%}
+        <!-- Right Column: Product Details -->
+        <div class="col-lg-6 col-md-12">
+            <div class="card shadow-sm mb-4">
+                <div class="card-body">
+                    <h4 class="card-title mb-3">Product Info</h4>
+                    <table class="table table-borderless mb-0">
+                        <tbody>
+                            <tr>
+                                <th scope="row">Date</th>
+                                <td>{{ product.created_at|date:"M j, Y" }}</td>
+                            </tr>
+                            <tr>
+                                <th scope="row">Price</th>
+                                <td>${{ product.price }}</td>
+                            </tr>
+                            <tr>
+                                <th scope="row">Rent Price</th>
+                                <td>${{ product.rent_price }}</td>
+                            </tr>
+                            <tr>
+                                <th scope="row">Status</th>
+                                <td><span class="badge {{ product.get_status_badge_class }}">{{ product.get_status_display }}</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <h5 class="mt-4 mb-3">Technical Specifications</h5>
+                    <div class="product-specs">
+                        <table class="table table-borderless mb-0">
+                            <tbody>
+                                <tr>
+                                    <th scope="row">Power Output</th>
+                                    <td>{{ product.power_output|default:"N/A" }}</td>
+                                </tr>
+                                <tr>
+                                    <th scope="row">Fuel Type</th>
+                                    <td>{{ product.get_fuel_type_display }}</td>
+                                </tr>
+                                <tr>
+                                    <th scope="row">Phase</th>
+                                    <td>{{ product.phase|default:"N/A" }}</td>
+                                </tr>
+                                <tr>
+                                    <th scope="row">Noise Level</th>
+                                    <td>{{ product.noise_level|default:"N/A" }}</td>
+                                </tr>
+                                <tr>
+                                    <th scope="row">Tank Capacity</th>
+                                    <td>{{ product.tank_capacity|default:"N/A" }}</td>
+                                </tr>
+                                <tr>
+                                    <th scope="row">Runtime</th>
+                                    <td>{{ product.runtime|default:"N/A" }}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <h5 class="mt-4 mb-3">Service & Support</h5>
+                    <div class="service-features">
+                        {% if product.free_delivery %}
+                        <div class="feature-item mb-2">
+                            <i class="bi bi-truck text-success me-2"></i>
+                            <span>Free Delivery</span>
+                        </div>
+                        {% endif %}
+                        {% if product.warranty_period %}
+                        <div class="feature-item mb-2">
+                            <i class="bi bi-shield-check text-primary me-2"></i>
+                            <span>Warranty: {{ product.warranty_period }}</span>
+                        </div>
+                        {% endif %}
+                        {% if product.installation_time %}
+                        <div class="feature-item mb-2">
+                            <i class="bi bi-tools text-info me-2"></i>
+                            <span>Installation Time: {{ product.installation_time }}</span>
+                        </div>
+                        {% endif %}
+                        {% if product.technical_support %}
+                        <div class="feature-item mb-2">
+                            <i class="bi bi-headset text-warning me-2"></i>
+                            <span>Technical Support Available</span>
+                        </div>
+                        {% endif %}
+                        {% if product.replacement_guarantee %}
+                        <div class="feature-item mb-2">
+                            <i class="bi bi-arrow-repeat text-danger me-2"></i>
+                            <span>Replacement Guarantee: {{ product.replacement_guarantee }}</span>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    {% if product.rental_duration or product.maintenance_plan %}
+                    <h5 class="mt-4 mb-3">Rental Options</h5>
+                    <div class="rental-features">
+                        {% if product.rental_duration %}
+                        <div class="feature-item mb-2">
+                            <i class="bi bi-calendar-range text-primary me-2"></i>
+                            <span>Rental Duration: {{ product.rental_duration }}</span>
+                        </div>
+                        {% endif %}
+                        {% if product.maintenance_plan %}
+                        <div class="feature-item mb-2">
+                            <i class="bi bi-gear text-success me-2"></i>
+                            <span>Maintenance Plan Included</span>
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+
+                    {% if product.ats_panel or product.onsite_technician or product.power_backup_design %}
+                    <h5 class="mt-4 mb-3">Optional Add-ons</h5>
+                    <div class="addon-features">
+                        {% if product.ats_panel %}
+                        <div class="feature-item mb-2">
+                            <i class="bi bi-lightning-charge text-warning me-2"></i>
+                            <span>ATS Panel Available</span>
+                        </div>
+                        {% endif %}
+                        {% if product.onsite_technician %}
+                        <div class="feature-item mb-2">
+                            <i class="bi bi-person-workspace text-info me-2"></i>
+                            <span>Onsite Technician Service</span>
+                        </div>
+                        {% endif %}
+                        {% if product.power_backup_design %}
+                        <div class="feature-item mb-2">
+                            <i class="bi bi-battery-charging text-success me-2"></i>
+                            <span>Power Backup Design Service</span>
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+
+                    <div class="mt-4">
+                        <strong>Specification:</strong>
+                        <div style="max-height: 120px; overflow-y: auto; border: 1px solid #eee; border-radius: 4px; padding: 8px; background: #fafafa;">
+                            {{ product.specification|linebreaksbr }}
+                        </div>
+                    </div>
+
+                    {% if product.free_delivery or product.warranty_period %}
+                    <div class="service-features mt-3">
+                        <h6 class="text-muted">Included Services:</h6>
+                        {% if product.free_delivery %}
+                        <p class="mb-1"><i class="bi bi-truck text-success"></i> Free Delivery</p>
+                        {% endif %}
+                        {% if product.warranty_period %}
+                        <p class="mb-1"><i class="bi bi-shield-check text-primary"></i> {{ product.warranty_period }} Warranty</p>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+
+                    <!-- Quick Action Buttons -->
+                    <div class="mt-4 pt-3 border-top">
+                        <div class="d-grid gap-2">
+                            {% if product.status == 'available' %}
+                            <a href="{% url 'rental_booking' %}?type=buy&product_id={{ product.id }}" 
+                               class="btn btn-buy-now">
+                                <i class="bi bi-cart-fill me-2"></i>Buy Now
+                                {% if product.price %}
+                                <span class="d-block small mt-1">${{ product.price }}</span>
+                                {% endif %}
+                            </a>
+                            {% endif %}
+                            {% if product.status == 'for_rent' or product.rent_price %}
+                            <a href="{% url 'rental_booking' %}?type=rent&product_id={{ product.id }}" 
+                               class="btn btn-success">
+                                <i class="bi bi-calendar-check me-2"></i>Rent Now
+                                {% if product.rent_price %}
+                                <span class="d-block small mt-1">${{ product.rent_price }}/month</span>
+                                {% endif %}
+                            </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Posts Section -->
+    <section class="recent-posts mt-5">
+        <div class="container">
+            <div class="section-header">
+                <h2>Recent Products</h2>
+                <p>Check out our other products</p>
+            </div>
+
+            <div class="row">
+                {% for recent_product in recent_products %}
+                <div class="col-md-4 mb-4">
+                    <div class="card h-100">
+                        {% if recent_product.product_image %}
+                            <img src="{{ recent_product.product_image.url }}" class="card-img-top" alt="{{ recent_product.title }}">
+                        {% else %}
+                            <img src="{% static 'assets/img/default.jpg' %}" class="card-img-top" alt="Default Image">
+                        {% endif %}
+                        <div class="card-body">
+                            <h5 class="card-title">{{ recent_product.title }}</h5>
+                            <p class="card-text text-muted">{{ recent_product.description|truncatewords:20 }}</p>
+                            
+                            <div class="product-pricing mb-3">
+                                {% if recent_product.price %}
+                                <p class="product-price fw-bold text-success mb-1">
+                                    <i class="bi bi-tag-fill me-1"></i>Purchase: ${{ recent_product.price }}
+                                </p>
+                                {% endif %}
+                                {% if recent_product.rent_price %}
+                                <p class="product-price fw-bold text-primary mb-0">
+                                    <i class="bi bi-calendar-check me-1"></i>Rent: ${{ recent_product.rent_price }}/month
+                                </p>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="d-flex gap-2">
+                                <a href="{% url 'product_detail' recent_product.id %}" class="btn btn-outline-primary">View Details</a>
+                                {% if recent_product.rent_price %}
+                                <a href="{% url 'rental_booking' %}?type=rent&product_id={{ recent_product.id }}" class="btn btn-primary">
+                                    <i class="bi bi-calendar-check me-1"></i>Rent
+                                </a>
+                                {% endif %}
+                                {% if recent_product.price %}
+                                <a href="{% url 'rental_booking' %}?type=buy&product_id={{ recent_product.id }}" class="btn btn-success">
+                                    <i class="bi bi-cart-fill me-1"></i>Buy
+                                </a>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </section>
+</div>
+{% endblock mainContent %}
 {% include 'assets/footer.html' %}
