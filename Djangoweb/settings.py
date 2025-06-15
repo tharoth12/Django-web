@@ -164,6 +164,9 @@ EMAIL_USE_SSL = False  # Added to ensure TLS is used instead of SSL
 TELEGRAM_BOT_TOKEN = '7305787895:AAHhu9ayBrK7QkTiaI8E2dk7m8iS1UIR5OM'
 TELEGRAM_CHAT_ID = '1139756425'  # This should be your actual chat ID, not the bot token
 
+# Google Sheets Settings
+GOOGLE_SHEET_ID = '1BnYcAf79WElpocP60B-9Iitbl_Xkq_xEMqjzv6Sg794'  # Your Google Sheet ID
+
 JAZZMIN_SETTINGS = {
     "site_title": "SL Power Admin",
     "site_header": "SL Power Dashboard",

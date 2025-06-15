@@ -29,6 +29,7 @@ from app.views import (
     service_request,
     generate_service_invoice,
     handle_telegram_callback,
+    booking_success,
 )
 
 urlpatterns = [
@@ -43,6 +44,7 @@ urlpatterns = [
     path('service-request/', service_request, name='service_request'),
     path('service/invoice/<int:service_request_id>/', generate_service_invoice, name='generate_service_invoice'),
     path('telegram/callback/', handle_telegram_callback, name='telegram_callback'),
+    path('booking-success/', booking_success, name='booking_success'),
 ]
 
 if settings.DEBUG:

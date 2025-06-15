@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from django.shortcuts import render , redirect, get_object_or_404
-from django.core.mail import send_mail
+from django.core.mail import send_mail, EmailMessage
 from django.conf import settings
 from django.template.loader import render_to_string, get_template
 from django.contrib import messages
@@ -30,6 +30,7 @@ from django.templatetags.static import static
 from django.utils.html import strip_tags
 from django.urls import reverse
 from django.http import JsonResponse
+from .utils import append_to_sheet
 
 # Create your views here.
 def index (request):
@@ -442,8 +443,11 @@ Optional Services:
                 # Send to Telegram with keyboard
                 send_telegram_message(telegram_message, keyboard=keyboard)
                 
-                messages.success(request, "Your request has been submitted successfully!")
-                return redirect('home')
+                # Send to Google Sheets
+                append_to_sheet(booking)
+                
+                # Success message removed; handled by success page
+                return redirect('booking_success')
             else:
                 messages.error(request, "Product not found.")
                 return redirect('home')
@@ -512,44 +516,69 @@ def send_invoice_to_telegram(booking):
         print(f"Error in send_invoice_to_telegram: {str(e)}")
         return False
 
+def notify_client_approval(booking, approved=True):
+    subject = "Your Request Has Been Approved" if approved else "Your Request Has Been Rejected"
+    message = (
+        f"Dear {booking.customer_name},\n\n"
+        f"We are pleased to inform you that your request for "
+        f"{booking.product.title if booking.product else 'our service'} has been "
+        f"{'approved' if approved else 'rejected'}.\n\n"
+        f"🧾 Booking Summary:\n"
+        f"- Invoice Number: {booking.invoice_number}\n"
+        f"- Order Type: {booking.order_type.capitalize()}\n"
+        f"- Price: ${booking.price:,.2f}\n"
+        f"- Status: {booking.status.capitalize()}\n"
+        f"- Submitted On: {booking.submitted_at.strftime('%Y-%m-%d %H:%M')}\n"
+    )
+    if not approved and booking.rejection_reason:
+        message += f"\n❗ Reason for rejection: {booking.rejection_reason}\n"
+    message += (
+        f"\nThank you for choosing SL Power. If you have any questions, feel free to contact vai Telegram https://t.me/Generator_cambodia .\n\n"
+        f"Best regards,\n"
+        f"The SL Power Team"
+    )
+
+    email = EmailMessage(
+        subject,
+        message,
+        None,  # Uses DEFAULT_FROM_EMAIL
+        [booking.email],
+    )
+
+    # Generate and attach PDF invoice if booking is approved
+    if approved:
+        try:
+            template = get_template('invoice.html')
+            html_string = template.render({'booking': booking, 'general_info': GeneralInfo.objects.first()})
+            with tempfile.NamedTemporaryFile(suffix='.pdf', delete=False) as tmp_file:
+                HTML(string=html_string, base_url=None).write_pdf(tmp_file)
+                tmp_file_path = tmp_file.name
+            email.attach(f'invoice_{booking.invoice_number}.pdf', open(tmp_file_path, 'rb').read(), 'application/pdf')
+            os.unlink(tmp_file_path)
+        except Exception as e:
+            print(f"Error generating or attaching invoice PDF: {e}")
+
+    email.send(fail_silently=False)
+
 @csrf_exempt
 def telegram_webhook(request):
-    print("\n=== Telegram Webhook Debug Info ===")
-    print("Time:", timezone.now())
-    print("Request method:", request.method)
-    print("Request headers:", dict(request.headers))
-    print("Request body:", request.body.decode('utf-8'))
-    print("Request path:", request.path)
-    print("Request GET params:", request.GET)
-    print("Request POST params:", request.POST)
-    print("================================\n")
-    
+    # Debug prints removed for production cleanliness
     if request.method == 'POST':
         try:
             data = json.loads(request.body)
-            print("Parsed JSON data:", json.dumps(data, indent=2))
-            
-            # Handle callback queries
+            # Debug prints removed
             callback_query = data.get('callback_query', {})
             if callback_query:
                 callback_data = callback_query.get('data', '')
                 message = callback_query.get('message', {})
                 chat_id = message.get('chat', {}).get('id')
                 
-                print("Callback data:", callback_data)
-                print("Chat ID:", chat_id)
-                
-                # Extract action and ID from callback_data
-                parts = callback_data.split('_')
-                print("Callback parts:", parts)
-                
-                if len(parts) == 2:
-                    action, request_id = parts
-                elif len(parts) == 3:
-                    action, period, request_id = parts
+                if len(callback_data.split('_')) == 2:
+                    action, request_id = callback_data.split('_')
+                elif len(callback_data.split('_')) == 3:
+                    action, period, request_id = callback_data.split('_')
                     action = f"{action}_{period}"
                 else:
-                    print("Invalid callback data format:", callback_data)
                     return HttpResponse('Invalid callback data', status=400)
                 
                 # Try to get either a RentalBooking or ServiceRequest
@@ -561,7 +590,6 @@ def telegram_webhook(request):
                         service_request = ServiceRequest.objects.get(id=request_id)
                         request_type = 'service'
                     except ServiceRequest.DoesNotExist:
-                        print("Request not found:", request_id)
                         return HttpResponse('Request not found', status=404)
                 
                 if request_type == 'booking':
@@ -620,6 +648,7 @@ Payment Policy: For rentals of 6+ months, initial 1-month payment is required.
 """
                                 send_telegram_message(approval_message)
                                 send_invoice_to_telegram(booking)
+                                notify_client_approval(booking, approved=True)
                                 return HttpResponse('OK')
                         elif booking.order_type == 'buy':
                             message = f"""
@@ -693,6 +722,7 @@ Approved: {timezone.now().strftime('%Y-%m-%d %H:%M')}
                         send_invoice_to_telegram(booking)
                     elif action == 'reject':
                         booking.status = 'rejected'
+                        # Optionally, set rejection_reason here if you collect it from admin or bot
                         booking.save()
                         rejection_message = f"""
 ❌ Order Request Rejected
@@ -707,10 +737,12 @@ Approved: {timezone.now().strftime('%Y-%m-%d %H:%M')}
 
 📅 Order Date: {booking.submitted_at.strftime('%Y-%m-%d %H:%M')}
 🕒 Rejected: {timezone.now().strftime('%Y-%m-%d %H:%M')}
-
-Please contact the customer at {booking.phone} to discuss the rejection.
 """
+                        if booking.rejection_reason:
+                            rejection_message += f"\n❗ Reason for rejection: {booking.rejection_reason}\n"
+                        rejection_message += "\nPlease contact the customer at {booking.phone} to discuss the rejection."
                         send_telegram_message(rejection_message)
+                        notify_client_approval(booking, approved=False)
                     elif action == 'invoice':
                         send_invoice_to_telegram(booking)
                 
@@ -839,14 +871,11 @@ Approved: {timezone.now().strftime('%Y-%m-%d %H:%M')}
                 
                 return HttpResponse('OK')
             else:
-                print("No callback query in the data")
                 return HttpResponse('No callback query', status=400)
                 
         except json.JSONDecodeError as e:
-            print("JSON decode error:", str(e))
             return HttpResponse('Invalid JSON', status=400)
         except Exception as e:
-            print("Error in webhook:", str(e))
             return HttpResponse(f'Error: {str(e)}', status=500)
     
     return HttpResponse('Method not allowed', status=405)
@@ -936,8 +965,8 @@ def service_request(request):
         if image:
             send_telegram_image(image)
 
-        messages.success(request, 'Service request submitted successfully!')
-        return redirect('home')
+        # Success message removed; handled by success page
+        return redirect('booking_success')
 
     # Get service types and machine types for the form
     services = Service.objects.all()
@@ -1104,3 +1133,23 @@ def send_telegram_message(message, chat_id=None, keyboard=None):
     except Exception as e:
         print(f"Error sending Telegram message: {str(e)}")
         return False
+
+def submit_booking(request):
+    if request.method == 'POST':
+        form = BookingForm(request.POST)
+        if form.is_valid():
+            booking = form.save()
+            
+            # Send to Google Sheets
+            append_to_sheet(booking)
+            
+            # Send Telegram notification
+            send_telegram_message("New booking submitted", booking)
+            
+            return redirect('booking_success')
+    else:
+        form = BookingForm()
+    return render(request, 'booking_form.html', {'form': form})
+
+def booking_success(request):
+    return render(request, 'booking_success.html')

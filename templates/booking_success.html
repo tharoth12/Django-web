@@ -1,0 +1,96 @@
+{% load static %}
+<style>
+    body {
+        background: linear-gradient(135deg, #e0f7fa 0%, #f8fafc 100%);
+    }
+    .booking-success-container {
+        min-height: 90vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: transparent;
+    }
+    .booking-success-card {
+        background: #fff;
+        border-radius: 18px;
+        box-shadow: 0 8px 32px rgba(40, 167, 69, 0.10), 0 1.5px 6px rgba(0,0,0,0.04);
+        padding: 2.5rem 2.5rem 2rem 2.5rem;
+        max-width: 420px;
+        margin: auto;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+    }
+    .success-icon {
+        width: 70px;
+        height: 70px;
+        background: #e6f9ed;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 1.2rem auto;
+        box-shadow: 0 2px 8px rgba(40, 167, 69, 0.08);
+    }
+    .success-icon svg {
+        width: 38px;
+        height: 38px;
+        color: #28a745;
+    }
+    .booking-success-card h2 {
+        font-size: 2rem;
+        color: #28a745;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+    }
+    .booking-success-card .lead {
+        font-size: 1.15rem;
+        color: #222;
+        margin-bottom: 1.1rem;
+    }
+    .booking-success-card .mb-3 {
+        color: #555;
+        margin-bottom: 1.2rem;
+    }
+    .booking-success-card .text-muted {
+        color: #888 !important;
+        margin-bottom: 1.2rem;
+    }
+    .booking-success-card a.btn-primary {
+        background: #28a745;
+        border: none;
+        font-weight: 600;
+        padding: 0.75rem 2.2rem;
+        border-radius: 8px;
+        transition: background 0.2s;
+        font-size: 1.1rem;
+        box-shadow: 0 2px 8px rgba(40, 167, 69, 0.08);
+    }
+    .booking-success-card a.btn-primary:hover {
+        background: #218838;
+    }
+</style>
+
+<div class="booking-success-container">
+    <div class="booking-success-card">
+        <div class="success-icon">
+            <!-- SVG checkmark icon for crispness -->
+            <svg viewBox="0 0 24 24" fill="none">
+                <circle cx="12" cy="12" r="12" fill="#e6f9ed"/>
+                <path d="M7 13.5L11 17L17 9.5" stroke="#28a745" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+        </div>
+        <h2>Thank You!</h2>
+        <p class="lead">Your request has been submitted successfully.</p>
+        <p class="mb-3">
+            Our team is reviewing your request.<br>
+            You will receive a confirmation via email or Telegram shortly.
+        </p>
+        <p class="text-muted small">
+            For urgent matters, please <a href="https://t.me/Generator_cambodia" target="_blank">contact our support team</a>.
+        </p>
+        <a href="{% url 'home' %}" class="btn btn-primary mt-4 px-4">
+            ← Back to Home
+        </a>
+    </div>
+</div>
