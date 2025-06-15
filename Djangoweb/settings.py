@@ -189,8 +189,8 @@ JAZZMIN_SETTINGS = {
     "site_brand": "SL Power",
 
     # Ensure these paths are relative to your static files setup
-    "site_logo": "assets/img/logo2.png",
-    "site_icon": "assets/img/logo2.png",  # Optional, used as favicon
+    "site_logo": "assets\img\logo.png",
+    "site_icon": "assets\img\logo.png",  # Optional, used as favicon
 
     "welcome_sign": "Welcome to SL Power Admin Panel",
     "copyright": " SL Power Co., Ltd",
@@ -248,7 +248,7 @@ JAZZMIN_UI_TWEAKS = {
     "footer_small_text": False,
     "body_small_text": True,
     "brand_small_text": False,
-    "brand_colour": "navbar-navy",
+    "brand_colour": "navbar-light",
     "accent": "accent-navy",
     "navbar": "navbar-navy navbar-dark",
     "no_navbar_border": True,
@@ -256,7 +256,7 @@ JAZZMIN_UI_TWEAKS = {
     "layout_boxed": False,
     "footer_fixed": False,
     "sidebar_fixed": True,
-    "sidebar": "sidebar-dark-navy",
+    "sidebar": "sidebar-light-navy",
     "sidebar_nav_small_text": False,
     "sidebar_disable_expand": False,
     "sidebar_nav_child_indent": True,
