@@ -231,7 +231,7 @@ GitHub.sublime-settings
 # Sensitive files
 myenv/tokenemailandtelegram.txt
 myenv/token.pickle
-myenv/credentials.json
+!credentials.template.json
 
 # IDE
 .idea/
@@ -245,3 +245,7 @@ Thumbs.db
 
 # Project specific
 local_settings.py
+token.pickle
+credentials.json
+!credentials.template.json
+tokenemailandtelegram.txt

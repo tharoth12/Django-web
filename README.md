@@ -95,6 +95,31 @@ The project includes Telegram bot integration for notifications. Configure your 
 3. Setting up the chat ID
 4. Updating the settings in `settings.py`
 
+## Google Sheets API Setup
+
+1. Go to the [Google Cloud Console](https://console.cloud.google.com/)
+2. Create a new project or select an existing one
+3. Enable the Google Sheets API
+4. Go to Credentials
+5. Create OAuth 2.0 Client ID credentials
+6. Download the credentials and save as `credentials.json`
+7. Place `credentials.json` in the `myenv/` directory
+
+Note: Never commit your actual `credentials.json` to Git. Use `credentials.template.json` as a reference for the required format.
+
+## Environment Variables
+
+Create a file named `tokenemailandtelegram.txt` in the `myenv/` directory with the following format:
+
+```
+EMAIL_HOST_USER=your_email@gmail.com
+EMAIL_HOST_PASSWORD=your_app_password
+TELEGRAM_BOT_TOKEN=your_telegram_bot_token
+TELEGRAM_CHAT_ID=your_telegram_chat_id
+```
+
+Note: For Gmail, you need to use an App Password. Generate one from your Google Account settings.
+
 ## Development
 
 ### Running Tests
