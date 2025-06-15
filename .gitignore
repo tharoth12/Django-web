@@ -226,5 +226,5 @@ GitHub.sublime-settings
 
 # Sensitive files
 myenv/tokenemailandtelegram.txt
-token.pickle
-client_secret*.json
+myenv/token.pickle
+myenv/credentials.json
