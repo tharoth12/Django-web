@@ -13,6 +13,7 @@ https://docs.djangoproject.com/en/5.0/ref/settings/
 from pathlib import Path
 import os
 import certifi
+from dotenv import load_dotenv
 
 os.environ['SSL_CERT_FILE'] = certifi.where()
 
@@ -150,19 +151,34 @@ STATICFILES_DIRS = [
 
 STATIC_ROOT= os.path.join(BASE_DIR , 'staticfiles')
 
-# Email settings
+# Load tokens and secrets from myenv/tokenemailandtelegram
+TOKEN_FILE = os.path.join(BASE_DIR, 'myenv', 'tokenemailandtelegram.txt')
+print(f"Looking for token file at: {TOKEN_FILE}")
+if os.path.exists(TOKEN_FILE):
+    print("Token file found, loading environment variables...")
+    with open(TOKEN_FILE) as f:
+        for line in f:
+            if '=' in line:
+                key, value = line.strip().split('=', 1)
+                os.environ[key] = value
+                print(f"Loaded {key}")
+else:
+    print("Token file not found!")
+
+# Email settings for Gmail SMTP
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'smtp.gmail.com'  # Changed from smtp.googlemail.com to smtp.gmail.com
+EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
-EMAIL_HOST_USER = 'kohtharoth@gmail.com'
-EMAIL_HOST_PASSWORD = 'niicvfcinnfywrva'  # Your Gmail App Password
-DEFAULT_FROM_EMAIL = 'kohtharoth@gmail.com'
-EMAIL_USE_SSL = False  # Added to ensure TLS is used instead of SSL
+EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER')
+EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD')
+DEFAULT_FROM_EMAIL = os.environ.get('EMAIL_HOST_USER')
 
 # Telegram Bot Settings
-TELEGRAM_BOT_TOKEN = '7305787895:AAHhu9ayBrK7QkTiaI8E2dk7m8iS1UIR5OM'
-TELEGRAM_CHAT_ID = '1139756425'  # This should be your actual chat ID, not the bot token
+TELEGRAM_BOT_TOKEN = os.environ.get('TELEGRAM_BOT_TOKEN')
+TELEGRAM_CHAT_ID = os.environ.get('TELEGRAM_CHAT_ID', '1139756425')
+print(f"Telegram Bot Token loaded: {'Yes' if TELEGRAM_BOT_TOKEN else 'No'}")
+print(f"Telegram Chat ID loaded: {TELEGRAM_CHAT_ID}")
 
 # Google Sheets Settings
 GOOGLE_SHEET_ID = '1BnYcAf79WElpocP60B-9Iitbl_Xkq_xEMqjzv6Sg794'  # Your Google Sheet ID
@@ -259,3 +275,5 @@ JAZZMIN_UI_TWEAKS = {
     },
     "actions_sticky_top": True
 }
+
+load_dotenv()

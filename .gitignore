@@ -223,3 +223,8 @@ GitHub.sublime-settings
 !.vscode/extensions.json 
 
 .history
+
+# Sensitive files
+myenv/tokenemailandtelegram.txt
+token.pickle
+client_secret*.json
