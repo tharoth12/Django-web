@@ -10,8 +10,10 @@ SCOPES = ['https://www.googleapis.com/auth/spreadsheets']
 
 def get_google_sheets_service():
     creds = None
-    if os.path.exists('token.pickle'):
-        with open('token.pickle', 'rb') as token:
+    token_path = os.path.join(settings.BASE_DIR, 'myenv', 'token.pickle')
+    credentials_path = os.path.join(settings.BASE_DIR, 'myenv', 'credentials.json')
+    if os.path.exists(token_path):
+        with open(token_path, 'rb') as token:
             creds = pickle.load(token)
     
     if not creds or not creds.valid:
@@ -19,9 +21,9 @@ def get_google_sheets_service():
             creds.refresh(Request())
         else:
             flow = InstalledAppFlow.from_client_secrets_file(
-                'credentials.json', SCOPES)
+                credentials_path, SCOPES)
             creds = flow.run_local_server(port=0)
-        with open('token.pickle', 'wb') as token:
+        with open(token_path, 'wb') as token:
             pickle.dump(creds, token)
 
     return build('sheets', 'v4', credentials=creds)

@@ -32,12 +32,15 @@ print(f"\nBASE_DIR : {BASE_DIR}\n")
 SECRET_KEY = 'django-insecure-n3714lj&sdfv_e9qw4)z+zv@%4ugleb&bp=cwgu$@n%$%r_-&1'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
 ALLOWED_HOSTS = [
     '127.0.0.1',
     'localhost',
-    '.ngrok-free.app'  # This will allow any ngrok-free.app subdomain
+    '.ngrok-free.app',  # This will allow any ngrok-free.app subdomain
+    '.vercel.app',      # For Vercel deployment
+    '.railway.app',     # For Railway deployment
+    '.herokuapp.com',   # For Heroku deployment
 ]
 
 
@@ -142,14 +145,14 @@ STATIC_URL = 'static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-STATIC_URL = '/static/'
-MEDIA_URL = '/img/'
-MEDIA_ROOT = BASE_DIR / 'static/assets/img'
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 STATICFILES_DIRS = [
     os.path.join(BASE_DIR, 'static/')
 ]
 
-STATIC_ROOT= os.path.join(BASE_DIR , 'staticfiles')
+# Media files configuration
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 # Load tokens and secrets from myenv/tokenemailandtelegram
 TOKEN_FILE = os.path.join(BASE_DIR, 'myenv', 'tokenemailandtelegram.txt')
@@ -275,5 +278,16 @@ JAZZMIN_UI_TWEAKS = {
     },
     "actions_sticky_top": True
 }
+
+# Security settings
+SECURE_SSL_REDIRECT = True
+SESSION_COOKIE_SECURE = True
+CSRF_COOKIE_SECURE = True
+SECURE_BROWSER_XSS_FILTER = True
+SECURE_CONTENT_TYPE_NOSNIFF = True
+X_FRAME_OPTIONS = 'DENY'
+SECURE_HSTS_SECONDS = 31536000  # 1 year
+SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+SECURE_HSTS_PRELOAD = True
 
 load_dotenv()

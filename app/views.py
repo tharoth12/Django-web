@@ -324,6 +324,9 @@ def rental_booking(request):
         # Convert rental_date to date object if it's a string
         if isinstance(rental_date, str) and rental_date:
             rental_date = datetime.strptime(rental_date, '%Y-%m-%d').date()
+        # Fallback if rental_date is missing or empty
+        if not rental_date:
+            rental_date = timezone.now().date()
             
         # Calculate return date based on rental period
         return_date = None
@@ -447,7 +450,7 @@ Optional Services:
                 append_to_sheet(booking)
                 
                 # Success message removed; handled by success page
-                return redirect('booking_success')
+                return render(request, 'booking_success.html')
             else:
                 messages.error(request, "Product not found.")
                 return redirect('home')
@@ -965,8 +968,42 @@ def service_request(request):
         if image:
             send_telegram_image(image)
 
+        # Send confirmation email for 'buy' or service requests (not rent)
+        if service_type and service_type.lower() in ['buy', 'purchase']:
+            subject = "Thank you for your purchase request"
+            message = (
+                f"Dear {customer_name},\n\n"
+                "Thank you for your interest in purchasing our service/product. "
+                "Our team will contact you soon to confirm your request and provide further details.\n\n"
+                "Best regards,\nSL Power Team"
+            )
+            if email:
+                send_mail(
+                    subject,
+                    message,
+                    None,  # Uses DEFAULT_FROM_EMAIL
+                    [email],
+                    fail_silently=True,
+                )
+        elif service_type and service_type.lower() not in ['rent', 'rental']:
+            subject = "Thank you for your service request"
+            message = (
+                f"Dear {customer_name},\n\n"
+                "Thank you for requesting our service. "
+                "Our team has received your request and will contact you soon to follow up.\n\n"
+                "Best regards,\nSL Power Team"
+            )
+            if email:
+                send_mail(
+                    subject,
+                    message,
+                    None,  # Uses DEFAULT_FROM_EMAIL
+                    [email],
+                    fail_silently=True,
+                )
+
         # Success message removed; handled by success page
-        return redirect('booking_success')
+        return render(request, 'booking_success.html')
 
     # Get service types and machine types for the form
     services = Service.objects.all()
