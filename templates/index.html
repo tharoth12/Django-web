@@ -121,17 +121,17 @@
             <div class="testimonial-wrap">
               <div class="testimonial-item testimonial-card">
                 <div class="d-flex align-items-center">
-                  {% if testimonial.user_image %}
-                     <img src="{{testimonial.user_image.url }}" class="testimonial-img flex-shrink-0" alt="">
-                  {%else %}
-                     <img src="{% static testimonial.user_image %}" class="testimonial-img flex-shrink-0" alt="">
-                  {% endif%}  
+                  {% if testimonial.user_image and testimonial.user_image.url %}
+                    <img src="{{ testimonial.user_image.url }}" class="testimonial-img flex-shrink-0" alt="{{ testimonial.username }}">
+                  {% else %}
+                    <img src="{% static 'assets/img/logo.png' %}" class="testimonial-img flex-shrink-0" alt="{{ testimonial.username }}">
+                  {% endif %}
                   <div>
-                    <h3>{{testimonial.username}} <span class="verified-badge" title="Verified">&#10004;</span></h3>
-                    <h4>{{testimonial.user_job_title}}</h4>
+                    <h3>{{ testimonial.username }} <span class="verified-badge" title="Verified">&#10004;</span></h3>
+                    <h4>{{ testimonial.user_job_title }}</h4>
                     <div class="testimonial-stars">
                       {% for i in 'x'|ljust:testimonial.rating_count %}
-                          <i class = "bi bi-star-fill"></i>
+                        <i class="bi bi-star-fill"></i>
                       {% endfor %}
                     </div>
                   </div>
@@ -143,13 +143,12 @@
                   <i class="bi bi-quote quote-icon-right"></i>
                 </blockquote>
                 {% if testimonial.review|length > 200 %}
-                <button class="btn btn-link btn-sm read-more-toggle" type="button">Read More</button>
+                  <button class="btn btn-link btn-sm read-more-toggle" type="button">Read More</button>
                 {% endif %}
               </div>
             </div>
-          </div><!-- End testimonial item -->
+          </div>
         {% endfor %}
-
       </div>
       <div class="swiper-pagination"></div>
     </div>

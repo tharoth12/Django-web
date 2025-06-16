@@ -67,4 +67,48 @@ def append_to_sheet(booking):
         return True
     except Exception as e:
         print(f"Error appending to Google Sheet: {str(e)}")
+        return False
+
+def update_sheet_status(booking):
+    try:
+        service = get_google_sheets_service()
+        spreadsheet_id = settings.GOOGLE_SHEET_ID
+        range_name = 'Sheet1!A:Z'  # Adjust based on your sheet name and columns
+
+        # First, get all values to find the row with matching invoice number
+        result = service.spreadsheets().values().get(
+            spreadsheetId=spreadsheet_id,
+            range=range_name
+        ).execute()
+        
+        values = result.get('values', [])
+        if not values:
+            return False
+
+        # Find the row with matching invoice number
+        row_index = None
+        for i, row in enumerate(values):
+            if row and row[0] == booking.invoice_number:
+                row_index = i + 1  # Sheets API is 1-indexed
+                break
+
+        if row_index is None:
+            return False
+
+        # Only update the value in the status column (column I, index 8)
+        range_to_update = f'Sheet1!I{row_index}'  # Column I is the status column
+        body = {
+            'values': [[booking.status.capitalize()]]
+        }
+
+        service.spreadsheets().values().update(
+            spreadsheetId=spreadsheet_id,
+            range=range_to_update,
+            valueInputOption='RAW',
+            body=body
+        ).execute()
+
+        return True
+    except Exception as e:
+        print(f"Error updating Google Sheet status: {str(e)}")
         return False 

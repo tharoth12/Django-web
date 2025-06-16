@@ -28,7 +28,7 @@ class Service (models.Model):
         return self.title
     
 class Testimonial(models.Model):
-    user_image = models.ImageField( max_length= 255 , blank =True , null = True)
+    user_image = models.ImageField(max_length=255, blank=True, null=True)
     star_count=[
         (1, 'One'),
         (2, 'Two'),

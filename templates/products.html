@@ -3,20 +3,77 @@
 
 {% block mainContent %}
 <div class="container mt-5">
-    <h1 class="mb-4">Our Products</h1>
+    <h1 class="mb-4 text-center fw-bold">Our Products</h1>
     
-    <div class="row">
+    <!-- Search Section -->
+    <div class="container py-4">
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <form method="GET" action="{% url 'products' %}" class="search-form">
+                    <div class="input-group input-group-lg shadow-sm">
+                        <span class="input-group-text bg-white border-end-0">
+                            <i class="bi bi-search text-primary"></i>
+                        </span>
+                        <input type="text" 
+                               name="search" 
+                               class="form-control border-start-0 ps-0" 
+                               placeholder="Search products by name, power output, fuel type, phase, kva, or country..."
+                               value="{{ search_query }}"
+                               aria-label="Search products">
+                        <button type="submit" class="btn btn-primary px-4">
+                            <i class="bi bi-search me-2"></i>Search
+                        </button>
+                        {% if search_query %}
+                        <a href="{% url 'products' %}" class="btn btn-outline-secondary px-4">
+                            <i class="bi bi-x-lg me-2"></i>Clear
+                        </a>
+                        {% endif %}
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Search Results Info -->
+    {% if search_query %}
+    <div class="alert {% if no_matches %}alert-secondary{% elif is_similar_results %}alert-warning{% else %}alert-info{% endif %} mb-4 d-flex align-items-center">
+        <i class="bi {% if no_matches %}bi-emoji-frown-fill{% elif is_similar_results %}bi-exclamation-triangle-fill{% else %}bi-info-circle-fill{% endif %} me-2 fs-5"></i>
+        <div>
+            {% if no_matches %}
+                <strong>No Matches Found:</strong> No products found matching "{{ search_query }}". Showing all available products instead.
+            {% elif is_similar_results %}
+                <strong>Similar Products:</strong> No exact matches found for "{{ search_query }}". Showing similar products instead.
+            {% else %}
+                <strong>Search Results:</strong> Showing products matching "{{ search_query }}"
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+    
+    <div class="row g-4">
         {% for product in products %}
-        <div class="col-md-4 mb-4">
-            <div class="card h-100">
-                {% if product.product_image %}
-                    <img src="{{ product.product_image.url }}" class="card-img-top" alt="{{ product.title }}">
-                {% else %}
-                    <img src="{% static 'assets/img/default.jpg' %}" class="card-img-top" alt="Default Image">
-                {% endif %}
+        <div class="col-md-4">
+            <div class="card h-100 product-card">
+                <div class="product-image-container">
+                    {% if product.product_image %}
+                        <img src="{{ product.product_image.url }}" class="card-img-top" alt="{{ product.title }}">
+                    {% else %}
+                        <img src="{% static 'assets/img/default.jpg' %}" class="card-img-top" alt="Default Image">
+                    {% endif %}
+                    <div class="product-status-badge">
+                        <span class="badge {{ product.get_status_badge_class }}">{{ product.get_status_display }}</span>
+                    </div>
+                </div>
                 <div class="card-body">
-                    <h5 class="card-title">{{ product.title }}</h5>
-                    <p class="card-text text-muted">{{ product.description|truncatewords:20 }}</p>
+                    <h5 class="card-title fw-bold">{{ product.title }}</h5>
+                    <div class="product-specs mb-3">
+                        {% if product.power_output %}
+                        <p class="mb-1"><i class="bi bi-lightning-charge text-warning me-2"></i>{{ product.power_output }}</p>
+                        {% endif %}
+                        {% if product.fuel_type %}
+                        <p class="mb-1"><i class="bi bi-fuel-pump text-primary me-2"></i>{{ product.get_fuel_type_display }}</p>
+                        {% endif %}
+                    </div>
                     
                     <div class="product-pricing mb-3">
                         {% if product.price %}
@@ -32,15 +89,17 @@
                     </div>
                     
                     <div class="d-grid gap-2">
-                        <a href="{% url 'product_detail' product.id %}" class="btn btn-outline-primary">View Details</a>
+                        <a href="{% url 'product_detail' product.id %}" class="btn btn-outline-primary">
+                            <i class="bi bi-eye me-2"></i>View Details
+                        </a>
                         {% if product.status == 'available' %}
                         <a href="{% url 'rental_booking' %}?type=buy&product_id={{ product.id }}" class="btn btn-buy-now">
-                            <i class="bi bi-cart-fill me-1"></i>Buy Now
+                            <i class="bi bi-cart-fill me-2"></i>Buy Now
                         </a>
                         {% endif %}
                         {% if product.rent_price %}
                         <a href="{% url 'rental_booking' %}?type=rent&product_id={{ product.id }}" class="btn btn-success">
-                            <i class="bi bi-calendar-check me-1"></i>Rent Now
+                            <i class="bi bi-calendar-check me-2"></i>Rent Now
                         </a>
                         {% endif %}
                     </div>
@@ -52,11 +111,11 @@
 
     <!-- Pagination -->
     {% if products.has_other_pages %}
-    <nav aria-label="Page navigation" class="mt-4">
+    <nav aria-label="Page navigation" class="mt-5">
         <ul class="pagination justify-content-center">
             {% if products.has_previous %}
             <li class="page-item">
-                <a class="page-link" href="?page={{ products.previous_page_number }}" aria-label="Previous">
+                <a class="page-link" href="?page={{ products.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}" aria-label="Previous">
                     <span aria-hidden="true">&laquo;</span>
                 </a>
             </li>
@@ -64,13 +123,13 @@
 
             {% for num in products.paginator.page_range %}
             <li class="page-item {% if products.number == num %}active{% endif %}">
-                <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                <a class="page-link" href="?page={{ num }}{% if search_query %}&search={{ search_query }}{% endif %}">{{ num }}</a>
             </li>
             {% endfor %}
 
             {% if products.has_next %}
             <li class="page-item">
-                <a class="page-link" href="?page={{ products.next_page_number }}" aria-label="Next">
+                <a class="page-link" href="?page={{ products.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}" aria-label="Next">
                     <span aria-hidden="true">&raquo;</span>
                 </a>
             </li>
@@ -81,6 +140,125 @@
 </div>
 
 <style>
+/* Search Section Styles */
+.search-form .input-group {
+    border-radius: 50px;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.search-form .input-group:focus-within {
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.15) !important;
+}
+
+.search-form .form-control {
+    border-radius: 0;
+    font-size: 1rem;
+    padding: 0.75rem 1rem;
+}
+
+.search-form .form-control:focus {
+    box-shadow: none;
+    border-color: #dee2e6;
+}
+
+.search-form .input-group-text {
+    border-radius: 50px 0 0 50px;
+    padding: 0.75rem 1.25rem;
+}
+
+.search-form .btn {
+    border-radius: 0 50px 50px 0;
+    padding: 0.75rem 1.5rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.search-form .btn-primary {
+    background: linear-gradient(45deg, #0d6efd, #0a58ca);
+    border: none;
+}
+
+.search-form .btn-primary:hover {
+    background: linear-gradient(45deg, #0a58ca, #084298);
+    transform: translateY(-1px);
+}
+
+.search-form .btn-outline-secondary {
+    border-radius: 50px;
+    margin-left: 0.5rem;
+}
+
+.search-form .btn-outline-secondary:hover {
+    background-color: #f8f9fa;
+    color: #6c757d;
+}
+
+@media (max-width: 768px) {
+    .search-form .input-group {
+        flex-wrap: nowrap;
+    }
+    
+    .search-form .btn {
+        padding: 0.75rem 1rem;
+    }
+    
+    .search-form .btn-outline-secondary {
+        margin-left: 0.25rem;
+    }
+}
+
+/* Product Card Styles */
+.product-card {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    border: none;
+    box-shadow: 0 2px 15px rgba(0,0,0,0.1);
+}
+
+.product-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 5px 20px rgba(0,0,0,0.15);
+}
+
+.product-image-container {
+    position: relative;
+    overflow: hidden;
+    border-radius: 0.375rem 0.375rem 0 0;
+}
+
+.product-image-container img {
+    height: 200px;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+}
+
+.product-card:hover .product-image-container img {
+    transform: scale(1.05);
+}
+
+.product-status-badge {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+}
+
+.product-specs p {
+    font-size: 0.9rem;
+    color: #6c757d;
+}
+
+.product-price {
+    font-size: 1.1rem;
+    margin: 0;
+    display: flex;
+    align-items: center;
+}
+
+.product-price i {
+    font-size: 1rem;
+    margin-right: 5px;
+}
+
 .btn-buy-now {
     background: linear-gradient(45deg, #ff6b6b, #ff8e8e);
     color: white;
@@ -99,37 +277,28 @@
     box-shadow: 0 4px 8px rgba(255, 107, 107, 0.3);
 }
 
-.btn-buy-now:active {
-    transform: translateY(0);
-    box-shadow: 0 2px 4px rgba(255, 107, 107, 0.2);
+/* Pagination Styles */
+.pagination .page-link {
+    color: #0d6efd;
+    border: 1px solid #dee2e6;
+    padding: 0.5rem 1rem;
 }
 
-.card {
-    transition: transform 0.3s ease;
+.pagination .page-item.active .page-link {
+    background-color: #0d6efd;
+    border-color: #0d6efd;
 }
 
-.card:hover {
-    transform: translateY(-5px);
+.pagination .page-link:hover {
+    background-color: #e9ecef;
+    border-color: #dee2e6;
 }
 
-.product-price {
-    font-size: 1.1rem;
-    margin: 0;
-    display: flex;
-    align-items: center;
-}
-
-.product-price i {
-    font-size: 1rem;
-    margin-right: 5px;
-}
-
-.product-price.text-success {
-    color: #28a745 !important;
-}
-
-.product-price.text-primary {
-    color: #004aad !important;
+/* Alert Styles */
+.alert-info {
+    background-color: #e8f4f8;
+    border-color: #bee5eb;
+    color: #0c5460;
 }
 </style>
 {% endblock mainContent %}

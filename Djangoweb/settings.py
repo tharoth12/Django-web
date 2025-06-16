@@ -32,7 +32,7 @@ print(f"\nBASE_DIR : {BASE_DIR}\n")
 SECRET_KEY = 'django-insecure-n3714lj&sdfv_e9qw4)z+zv@%4ugleb&bp=cwgu$@n%$%r_-&1'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = True
 
 ALLOWED_HOSTS = [
     '127.0.0.1',
@@ -136,23 +136,26 @@ USE_TZ = True
 
 
 # Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/5.0/howto/static-files/
-
-STATIC_URL = 'static/'
-
-# Default primary key field type
-# https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
-
-DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-
+STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 STATICFILES_DIRS = [
-    os.path.join(BASE_DIR, 'static/')
+    os.path.join(BASE_DIR, 'static'),
 ]
 
 # Media files configuration
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+# Remove whitenoise for development
+if DEBUG:
+    STATICFILES_STORAGE = 'django.contrib.staticfiles.storage.StaticFilesStorage'
+else:
+    STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
+# Default primary key field type
+# https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
+
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # Load tokens and secrets from myenv/tokenemailandtelegram
 TOKEN_FILE = os.path.join(BASE_DIR, 'myenv', 'tokenemailandtelegram.txt')
@@ -190,36 +193,25 @@ JAZZMIN_SETTINGS = {
     "site_title": "SL Power Admin",
     "site_header": "SL Power Dashboard",
     "site_brand": "SL Power",
-
-    # Ensure these paths are relative to your static files setup
-    "site_logo": "assets\img\logo.png",
-    "site_icon": "assets\img\logo.png",  # Optional, used as favicon
-
+    "site_logo": "assets/img/logo.png",
+    "site_icon": "assets/img/logo.png",
     "welcome_sign": "Welcome to SL Power Admin Panel",
     "copyright": " SL Power Co., Ltd",
-
-    "show_ui_builder": True,             # Allows toggling UI tweaks
-    "navigation_expanded": True,         # Keep sidebar expanded by default
-
-    "hide_apps": [],                     # You can list apps to hide here
-    "hide_models": [],                   # You can list specific models to hide
-
-    "order_with_respect_to": [           # Controls sidebar order
+    "show_ui_builder": True,
+    "navigation_expanded": True,
+    "hide_apps": [],
+    "hide_models": [],
+    "order_with_respect_to": [
         "General infos",
         "Products",
         "Services",
         "Contactformlogs",
         "Testimonials"
     ],
-
-    # Font Awesome icons — ensure the app labels match Django's app/model naming
     "icons": {
-        # Django's built-in auth
         "auth": "fas fa-users-cog",
         "auth.user": "fas fa-user",
         "auth.Group": "fas fa-users",
-
-        # Model-specific icons
         "app.GeneralInfo": "fas fa-info-circle",
         "app.Service": "fas fa-tools",
         "app.Testimonial": "fas fa-comments",
@@ -230,16 +222,14 @@ JAZZMIN_SETTINGS = {
         "app.ServiceRequest": "fas fa-concierge-bell",
         "app.RentalBooking": "fas fa-calendar-check",
     },
-
     "topmenu_links": [
         {"name": "Website", "url": "/", "new_window": True},
-        {"model": "auth.User"},  # Link to User model
+        {"model": "auth.User"},
     ],
-
     "usermenu_links": [
         {
             "name": "Support",
-            "url": "https://t.me/your_telegram_username",  # Replace with your actual Telegram link
+            "url": "https://t.me/your_telegram_username",
             "icon": "fas fa-life-ring",
             "new_window": True
         }
@@ -279,15 +269,24 @@ JAZZMIN_UI_TWEAKS = {
     "actions_sticky_top": True
 }
 
-# Security settings
-SECURE_SSL_REDIRECT = True
-SESSION_COOKIE_SECURE = True
-CSRF_COOKIE_SECURE = True
-SECURE_BROWSER_XSS_FILTER = True
-SECURE_CONTENT_TYPE_NOSNIFF = True
-X_FRAME_OPTIONS = 'DENY'
-SECURE_HSTS_SECONDS = 31536000  # 1 year
-SECURE_HSTS_INCLUDE_SUBDOMAINS = True
-SECURE_HSTS_PRELOAD = True
+# Security settings - Completely disabled for development
+SECURE_SSL_REDIRECT = False
+SESSION_COOKIE_SECURE = False
+CSRF_COOKIE_SECURE = False
+SECURE_BROWSER_XSS_FILTER = False
+SECURE_CONTENT_TYPE_NOSNIFF = False
+X_FRAME_OPTIONS = 'SAMEORIGIN'
+SECURE_HSTS_SECONDS = 0
+SECURE_HSTS_INCLUDE_SUBDOMAINS = False
+SECURE_HSTS_PRELOAD = False
+
+# Add this to ensure HTTP is used in development
+if DEBUG:
+    SECURE_SSL_REDIRECT = False
+    SESSION_COOKIE_SECURE = False
+    CSRF_COOKIE_SECURE = False
+    SECURE_HSTS_SECONDS = 0
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = False
+    SECURE_HSTS_PRELOAD = False
 
 load_dotenv()

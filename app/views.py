@@ -30,7 +30,8 @@ from django.templatetags.static import static
 from django.utils.html import strip_tags
 from django.urls import reverse
 from django.http import JsonResponse
-from .utils import append_to_sheet
+from .utils import append_to_sheet, update_sheet_status
+from django.db.models import Q
 
 # Create your views here.
 def index (request):
@@ -141,28 +142,78 @@ def product_detail(request, product_id):
     return render(request, 'product_details.html', context)
 
 def products(request):
-      
-      all_products = Product.objects.all().order_by("-created_at")
-      product_per_page = 9
-      paginator = Paginator(all_products, product_per_page)
-
-      print(f"paginator.num_pages:{paginator.num_pages}")
-
-      page = request.GET.get('page')
-
-      print(f"page :{page}")
-
-      try:
-         products = paginator.page(page)  
-      except PageNotAnInteger:
-         products = paginator.page(1)
-      except EmptyPage:
-         products = paginator.page(paginator.num_pages)
-
-      context ={
-         "products": products,
-      }
-      return render(request, "products.html", context )
+    # Get search query from GET parameters
+    search_query = request.GET.get('search', '')
+    
+    # Base queryset
+    all_products = Product.objects.all()
+    similar_products = None
+    no_matches = False
+    
+    # Apply search filter if query exists
+    if search_query:
+        # First try exact matches
+        exact_matches = all_products.filter(
+            Q(title__icontains=search_query) |
+            Q(power_output__icontains=search_query) |
+            Q(fuel_type__icontains=search_query) |
+            Q(phase__icontains=search_query) |
+            Q(kva__icontains=search_query) |
+            Q(country__icontains=search_query)
+        )
+        
+        if exact_matches.exists():
+            all_products = exact_matches
+        else:
+            # If no exact matches, find similar products
+            # Split search query into words
+            search_words = search_query.split()
+            
+            # Create a Q object for each word
+            similar_queries = Q()
+            for word in search_words:
+                if len(word) > 2:  # Only consider words longer than 2 characters
+                    similar_queries |= (
+                        Q(title__icontains=word) |
+                        Q(power_output__icontains=word) |
+                        Q(fuel_type__icontains=word) |
+                        Q(phase__icontains=word) |
+                        Q(kva__icontains=word) |
+                        Q(country__icontains=word)
+                    )
+            
+            # Get similar products
+            similar_products = all_products.filter(similar_queries).distinct()
+            
+            if similar_products.exists():
+                all_products = similar_products
+            else:
+                # If no similar products found, show all products
+                no_matches = True
+                all_products = Product.objects.all().order_by("-created_at")
+    
+    # Order by creation date
+    all_products = all_products.order_by("-created_at")
+    
+    # Pagination
+    product_per_page = 9
+    paginator = Paginator(all_products, product_per_page)
+    
+    page = request.GET.get('page')
+    try:
+        products = paginator.page(page)
+    except PageNotAnInteger:
+        products = paginator.page(1)
+    except EmptyPage:
+        products = paginator.page(paginator.num_pages)
+    
+    context = {
+        "products": products,
+        "search_query": search_query,
+        "is_similar_results": similar_products is not None and not exact_matches.exists() if search_query else False,
+        "no_matches": no_matches,
+    }
+    return render(request, "products.html", context)
 
 def hero_section(request):
    hero_sections = HeroSection.objects.filter(is_active=True).order_by('display_order')
@@ -565,11 +616,9 @@ def notify_client_approval(booking, approved=True):
 
 @csrf_exempt
 def telegram_webhook(request):
-    # Debug prints removed for production cleanliness
     if request.method == 'POST':
         try:
             data = json.loads(request.body)
-            # Debug prints removed
             callback_query = data.get('callback_query', {})
             if callback_query:
                 callback_data = callback_query.get('data', '')
@@ -596,40 +645,12 @@ def telegram_webhook(request):
                         return HttpResponse('Request not found', status=404)
                 
                 if request_type == 'booking':
-                    # Handle rental/purchase booking callbacks
                     if action == 'approve':
-                        if booking.order_type == 'rent':
-                            months = (booking.return_date.year - booking.rental_date.year) * 12 + (booking.return_date.month - booking.rental_date.month)
-                            if booking.return_date.day > booking.rental_date.day:
-                                months += 1
-                            if months <= 5:
-                                # 1-5 months: show options
-                                message = """
-Rental Requests (1-5 months)
-
-Please choose an approval option:
-1. Approve for 1 month only
-2. Approve full rental period
-3. Reject the request
-"""
-                                keyboard = {
-                                    "inline_keyboard": [
-                                        [
-                                            {"text": "Approve 1 Month", "callback_data": f"approve_1month_{booking.id}"},
-                                            {"text": "Approve Full Period", "callback_data": f"approve_full_{booking.id}"}
-                                        ],
-                                        [
-                                            {"text": "Reject", "callback_data": f"reject_{booking.id}"}
-                                        ]
-                                    ]
-                                }
-                                send_telegram_message(message, keyboard=keyboard)
-                                return HttpResponse('OK')
-                            else:
-                                # 6+ months: direct approval with invoice
-                                booking.status = 'approved'
-                                booking.save()
-                                approval_message = f"""
+                        booking.status = 'approved'
+                        booking.save()
+                        # Update Google Sheet status
+                        update_sheet_status(booking)
+                        approval_message = f"""
 Order Approved!
 
 Invoice: {booking.invoice_number}
@@ -646,87 +667,15 @@ Delivery: {booking.delivery_address}
 Notes: {booking.notes or 'None'}
 
 Approved: {timezone.now().strftime('%Y-%m-%d %H:%M')}
-
-Payment Policy: For rentals of 6+ months, initial 1-month payment is required.
-"""
-                                send_telegram_message(approval_message)
-                                send_invoice_to_telegram(booking)
-                                notify_client_approval(booking, approved=True)
-                                return HttpResponse('OK')
-                        elif booking.order_type == 'buy':
-                            message = f"""
-Purchase Requests
-
-A 10% booking deposit is required to confirm the purchase.
-
-Please choose an action:
-- Approve
-- Reject request
-"""
-                            keyboard = {
-                                "inline_keyboard": [
-                                    [
-                                        {"text": "Approve", "callback_data": f"approve_full_{booking.id}"}
-                                    ],
-                                    [
-                                        {"text": "Reject", "callback_data": f"reject_{booking.id}"}
-                                    ]
-                                ]
-                            }
-                            send_telegram_message(message, keyboard=keyboard)
-                            return HttpResponse('OK')
-                    elif action == 'approve_1month':
-                        from datetime import timedelta
-                        booking.return_date = booking.rental_date + timedelta(days=30)
-                        booking.status = 'approved'
-                        booking.save()
-                        approval_message = f"""
-Order Approved (1 Month Only)!
-
-Invoice: {booking.invoice_number}
-Customer: {booking.customer_name}
-Phone: {booking.phone}
-Email: {booking.email}
-
-Product: {booking.product.title if booking.product else 'N/A'}
-Total: ${booking.price}
-Deposit (30%): ${booking.deposit_amount}
-Balance: ${booking.balance_amount}
-
-Delivery: {booking.delivery_address}
-Notes: {booking.notes or 'None'}
-
-Approved: {timezone.now().strftime('%Y-%m-%d %H:%M')}
 """
                         send_telegram_message(approval_message)
                         send_invoice_to_telegram(booking)
-                    elif action == 'approve_full':
-                        booking.status = 'approved'
-                        booking.save()
-                        approval_message = f"""
-Order Approved (Full Period)!
-
-Invoice: {booking.invoice_number}
-Customer: {booking.customer_name}
-Phone: {booking.phone}
-Email: {booking.email}
-
-Product: {booking.product.title if booking.product else 'N/A'}
-Total: ${booking.price}
-Deposit (30%): ${booking.deposit_amount}
-Balance: ${booking.balance_amount}
-
-Delivery: {booking.delivery_address}
-Notes: {booking.notes or 'None'}
-
-Approved: {timezone.now().strftime('%Y-%m-%d %H:%M')}
-"""
-                        send_telegram_message(approval_message)
-                        send_invoice_to_telegram(booking)
+                        notify_client_approval(booking, approved=True)
                     elif action == 'reject':
                         booking.status = 'rejected'
-                        # Optionally, set rejection_reason here if you collect it from admin or bot
                         booking.save()
+                        # Update Google Sheet status
+                        update_sheet_status(booking)
                         rejection_message = f"""
 ❌ Order Request Rejected
 
@@ -743,12 +692,10 @@ Approved: {timezone.now().strftime('%Y-%m-%d %H:%M')}
 """
                         if booking.rejection_reason:
                             rejection_message += f"\n❗ Reason for rejection: {booking.rejection_reason}\n"
-                        rejection_message += "\nPlease contact the customer at {booking.phone} to discuss the rejection."
+                        rejection_message += f"\nPlease contact the customer at {booking.phone} to discuss the rejection."
                         send_telegram_message(rejection_message)
                         notify_client_approval(booking, approved=False)
-                    elif action == 'invoice':
-                        send_invoice_to_telegram(booking)
-                
+
                 elif request_type == 'service':
                     # Handle service request callbacks
                     if action == 'approve':
