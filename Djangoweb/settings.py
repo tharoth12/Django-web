@@ -202,6 +202,8 @@ if ENVIRONMENT == 'production':
         '127.0.0.1',
         'localhost',
     ]
+    # Disable debug in production
+    DEBUG = False
 else:
     # Use ngrok URL if available, otherwise use localhost
     ngrok_host = os.environ.get('NGROK_HOST')
@@ -209,6 +211,7 @@ else:
         TELEGRAM_WEBHOOK_URL = f'https://{ngrok_host}/telegram/webhook/'
     else:
         TELEGRAM_WEBHOOK_URL = 'http://localhost:8000/telegram/webhook/'
+    DEBUG = True
 
 print(f"Environment: {ENVIRONMENT}")
 print(f"Debug mode: {DEBUG}")
