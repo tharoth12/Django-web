@@ -17,13 +17,10 @@ from dotenv import load_dotenv
 
 os.environ['SSL_CERT_FILE'] = certifi.where()
 
-
-
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 print(f"\nBASE_DIR : {BASE_DIR}\n")
-
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
@@ -32,20 +29,16 @@ print(f"\nBASE_DIR : {BASE_DIR}\n")
 SECRET_KEY = 'django-insecure-n3714lj&sdfv_e9qw4)z+zv@%4ugleb&bp=cwgu$@n%$%r_-&1'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
 ALLOWED_HOSTS = [
     '127.0.0.1',
     'localhost',
-    '.ngrok-free.app',  # This will allow any ngrok-free.app subdomain
-    '.vercel.app',      # For Vercel deployment
-    '.railway.app',     # For Railway deployment
-    '.herokuapp.com',   # For Heroku deployment
+    'tharoth.pythonanywhere.com',
+    'www.tharoth.pythonanywhere.com',
 ]
 
-
 # Application definition
-
 INSTALLED_APPS = [
     'jazzmin',
     'django.contrib.admin',
@@ -84,7 +77,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
-                'app.context_processors.general_info',  # Custom context processor
+                'app.context_processors.general_info',
             ],
         },
     },
@@ -92,10 +85,7 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'Djangoweb.wsgi.application'
 
-
 # Database
-# https://docs.djangoproject.com/en/5.0/ref/settings/#databases
-
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
@@ -103,10 +93,7 @@ DATABASES = {
     }
 }
 
-
 # Password validation
-# https://docs.djangoproject.com/en/5.0/ref/settings/#auth-password-validators
-
 AUTH_PASSWORD_VALIDATORS = [
     {
         'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
@@ -122,18 +109,11 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-
 # Internationalization
-# https://docs.djangoproject.com/en/5.0/topics/i18n/
-
 LANGUAGE_CODE = 'en-us'
-
 TIME_ZONE = 'UTC'
-
 USE_I18N = True
-
 USE_TZ = True
-
 
 # Static files (CSS, JavaScript, Images)
 STATIC_URL = '/static/'
@@ -146,15 +126,10 @@ STATICFILES_DIRS = [
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
-# Remove whitenoise for development
-if DEBUG:
-    STATICFILES_STORAGE = 'django.contrib.staticfiles.storage.StaticFilesStorage'
-else:
-    STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+# Configure whitenoise for production
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 # Default primary key field type
-# https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
-
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # Load tokens and secrets from myenv/tokenemailandtelegram
@@ -183,110 +158,21 @@ DEFAULT_FROM_EMAIL = os.environ.get('EMAIL_HOST_USER')
 # Telegram Bot Settings
 TELEGRAM_BOT_TOKEN = os.environ.get('TELEGRAM_BOT_TOKEN')
 TELEGRAM_CHAT_ID = os.environ.get('TELEGRAM_CHAT_ID', '1139756425')
+TELEGRAM_WEBHOOK_URL = 'https://tharoth.pythonanywhere.com/telegram/webhook/'
 print(f"Telegram Bot Token loaded: {'Yes' if TELEGRAM_BOT_TOKEN else 'No'}")
 print(f"Telegram Chat ID loaded: {TELEGRAM_CHAT_ID}")
+print(f"Telegram Webhook URL: {TELEGRAM_WEBHOOK_URL}")
 
-# Google Sheets Settings
-GOOGLE_SHEET_ID = '1BnYcAf79WElpocP60B-9Iitbl_Xkq_xEMqjzv6Sg794'  # Your Google Sheet ID
+# Security settings for production
+SECURE_SSL_REDIRECT = True
+SESSION_COOKIE_SECURE = True
+CSRF_COOKIE_SECURE = True
+SECURE_BROWSER_XSS_FILTER = True
+SECURE_CONTENT_TYPE_NOSNIFF = True
+X_FRAME_OPTIONS = 'DENY'
+SECURE_HSTS_SECONDS = 31536000  # 1 year
+SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+SECURE_HSTS_PRELOAD = True
 
-JAZZMIN_SETTINGS = {
-    "site_title": "SL Power Admin",
-    "site_header": "SL Power Dashboard",
-    "site_brand": "SL Power",
-    "site_logo": "assets/img/logo.png",
-    "site_icon": "assets/img/logo.png",
-    "welcome_sign": "Welcome to SL Power Admin Panel",
-    "copyright": " SL Power Co., Ltd",
-    "show_ui_builder": True,
-    "navigation_expanded": True,
-    "hide_apps": [],
-    "hide_models": [],
-    "order_with_respect_to": [
-        "General infos",
-        "Products",
-        "Services",
-        "Contactformlogs",
-        "Testimonials"
-    ],
-    "icons": {
-        "auth": "fas fa-users-cog",
-        "auth.user": "fas fa-user",
-        "auth.Group": "fas fa-users",
-        "app.GeneralInfo": "fas fa-info-circle",
-        "app.Service": "fas fa-tools",
-        "app.Testimonial": "fas fa-comments",
-        "app.FrequentlyAskedQuestion": "fas fa-question-circle",
-        "app.ContactFormlog": "fas fa-envelope",
-        "app.Product": "fas fa-boxes",
-        "app.HeroSection": "fas fa-image",
-        "app.ServiceRequest": "fas fa-concierge-bell",
-        "app.RentalBooking": "fas fa-calendar-check",
-    },
-    "topmenu_links": [
-        {"name": "Website", "url": "/", "new_window": True},
-        {"model": "auth.User"},
-    ],
-    "usermenu_links": [
-        {
-            "name": "Support",
-            "url": "https://t.me/your_telegram_username",
-            "icon": "fas fa-life-ring",
-            "new_window": True
-        }
-    ],
-}
-
-JAZZMIN_UI_TWEAKS = {
-    "navbar_small_text": False,
-    "footer_small_text": False,
-    "body_small_text": True,
-    "brand_small_text": False,
-    "brand_colour": "navbar-light",
-    "accent": "accent-navy",
-    "navbar": "navbar-navy navbar-dark",
-    "no_navbar_border": True,
-    "navbar_fixed": False,
-    "layout_boxed": False,
-    "footer_fixed": False,
-    "sidebar_fixed": True,
-    "sidebar": "sidebar-light-navy",
-    "sidebar_nav_small_text": False,
-    "sidebar_disable_expand": False,
-    "sidebar_nav_child_indent": True,
-    "sidebar_nav_compact_style": True,
-    "sidebar_nav_legacy_style": False,
-    "sidebar_nav_flat_style": True,
-    "theme": "lumen",
-    "dark_mode_theme": None,
-    "button_classes": {
-        "primary": "btn-outline-primary",
-        "secondary": "btn-outline-secondary",
-        "info": "btn-info",
-        "warning": "btn-warning",
-        "danger": "btn-danger",
-        "success": "btn-success"
-    },
-    "actions_sticky_top": True
-}
-
-# Security settings - Completely disabled for development
-SECURE_SSL_REDIRECT = False
-SESSION_COOKIE_SECURE = False
-CSRF_COOKIE_SECURE = False
-SECURE_BROWSER_XSS_FILTER = False
-SECURE_CONTENT_TYPE_NOSNIFF = False
-X_FRAME_OPTIONS = 'SAMEORIGIN'
-SECURE_HSTS_SECONDS = 0
-SECURE_HSTS_INCLUDE_SUBDOMAINS = False
-SECURE_HSTS_PRELOAD = False
-
-# Add this to ensure HTTP is used in development
-if DEBUG:
-    SECURE_SSL_REDIRECT = False
-    SESSION_COOKIE_SECURE = False
-    CSRF_COOKIE_SECURE = False
-    SECURE_HSTS_SECONDS = 0
-    SECURE_HSTS_INCLUDE_SUBDOMAINS = False
-    SECURE_HSTS_PRELOAD = False
-
+# Load environment variables
 load_dotenv()
