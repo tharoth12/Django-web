@@ -778,6 +778,58 @@ Rejected: {timezone.now().strftime('%Y-%m-%d %H:%M')}
 """
                         send_telegram_message(rejection_message)
                 
+                elif request_type == 'booking':
+                    if action == 'approve':
+                        booking.status = 'approved'
+                        booking.save()
+                        # Update Google Sheet status
+                        update_sheet_status(booking)
+                        approval_message = f"""
+Order Approved!
+
+Invoice: {booking.invoice_number}
+Customer: {booking.customer_name}
+Phone: {booking.phone}
+Email: {booking.email}
+
+Product: {booking.product.title if booking.product else 'N/A'}
+Total: ${booking.price}
+Deposit (30%): ${booking.deposit_amount}
+Balance: ${booking.balance_amount}
+
+Delivery: {booking.delivery_address}
+Notes: {booking.notes or 'None'}
+
+Approved: {timezone.now().strftime('%Y-%m-%d %H:%M')}
+"""
+                        send_telegram_message(approval_message)
+                        send_invoice_to_telegram(booking)
+                        notify_client_approval(booking, approved=True)
+                    elif action == 'reject':
+                        booking.status = 'rejected'
+                        booking.save()
+                        # Update Google Sheet status
+                        update_sheet_status(booking)
+                        rejection_message = f"""
+❌ Order Request Rejected
+
+📋 Invoice: {booking.invoice_number}
+👤 Customer: {booking.customer_name}
+📞 Phone: {booking.phone}
+📧 Email: {booking.email}
+
+🔌 Product: {booking.product.title if booking.product else 'N/A'}
+💰 Total: ${booking.price}
+
+📅 Order Date: {booking.submitted_at.strftime('%Y-%m-%d %H:%M')}
+🕒 Rejected: {timezone.now().strftime('%Y-%m-%d %H:%M')}
+"""
+                        if booking.rejection_reason:
+                            rejection_message += f"\n❗ Reason for rejection: {booking.rejection_reason}\n"
+                        rejection_message += f"\nPlease contact the customer at {booking.phone} to discuss the rejection."
+                        send_telegram_message(rejection_message)
+                        notify_client_approval(booking, approved=False)
+                
                 # Answer the callback query to remove the loading state
                 bot_token = settings.TELEGRAM_BOT_TOKEN
                 callback_id = callback_query.get('id')
