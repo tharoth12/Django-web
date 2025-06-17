@@ -38,15 +38,13 @@ ENVIRONMENT = os.environ.get('DJANGO_ENVIRONMENT', 'development')
 ALLOWED_HOSTS = [
     '127.0.0.1',
     'localhost',
+    'tharoth.pythonanywhere.com',
+    'www.tharoth.pythonanywhere.com',
+    '.pythonanywhere.com',  # Allow all pythonanywhere subdomains
 ]
 
 # Add production hosts if in production
 if ENVIRONMENT == 'production':
-    ALLOWED_HOSTS.extend([
-        'tharoth.pythonanywhere.com',
-        'www.tharoth.pythonanywhere.com',
-        '.pythonanywhere.com',  # Allow all pythonanywhere subdomains
-    ])
     # Ensure these settings are enabled in production
     SECURE_SSL_REDIRECT = True
     SESSION_COOKIE_SECURE = True
@@ -57,11 +55,6 @@ if ENVIRONMENT == 'production':
     # Disable debug in production
     DEBUG = False
 else:
-    # Use ngrok URL if available, otherwise use localhost
-    ngrok_host = os.environ.get('NGROK_HOST')
-    if ngrok_host:
-        ALLOWED_HOSTS.append(ngrok_host)
-        ALLOWED_HOSTS.append('.ngrok-free.app')  # Allow all ngrok-free.app subdomains
     DEBUG = True
 
 print(f"Environment: {ENVIRONMENT}")
@@ -196,18 +189,13 @@ TELEGRAM_CHAT_ID = os.environ.get('TELEGRAM_CHAT_ID', '1139756425')
 
 # Set webhook URL based on environment
 if ENVIRONMENT == 'production':
-    # Make sure this matches your PythonAnywhere domain exactly
     TELEGRAM_WEBHOOK_URL = 'https://tharoth.pythonanywhere.com/telegram/webhook/'
 else:
-    # Use ngrok URL if available, otherwise use localhost
-    ngrok_host = os.environ.get('NGROK_HOST')
-    if ngrok_host:
-        TELEGRAM_WEBHOOK_URL = f'https://{ngrok_host}/telegram/webhook/'
-    else:
-        TELEGRAM_WEBHOOK_URL = 'http://localhost:8000/telegram/webhook/'
+    TELEGRAM_WEBHOOK_URL = 'http://localhost:8000/telegram/webhook/'
 
 print(f"Environment: {ENVIRONMENT}")
 print(f"Debug mode: {DEBUG}")
+print(f"Allowed hosts: {ALLOWED_HOSTS}")
 print(f"Telegram Bot Token loaded: {'Yes' if TELEGRAM_BOT_TOKEN else 'No'}")
 print(f"Telegram Chat ID loaded: {TELEGRAM_CHAT_ID}")
 print(f"Telegram Webhook URL: {TELEGRAM_WEBHOOK_URL}")
