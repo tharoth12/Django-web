@@ -294,7 +294,10 @@ Order Details:
 def generate_invoice(request, booking_id):
     booking = get_object_or_404(RentalBooking, id=booking_id)
     general_info = GeneralInfo.objects.first()
+    
+    # Get the absolute URL for the QR code image
     qr_code_url = request.build_absolute_uri(static('assets/img/QR.jpg'))
+    print(f"QR Code URL: {qr_code_url}")  # Debug log
     
     # Calculate rental months if it's a rental order
     months = None
@@ -311,12 +314,26 @@ def generate_invoice(request, booking_id):
         'qr_code_url': qr_code_url,     # Absolute URL for QR code
         'months': months,               # Add months to context
     }
+    
+    # Debug log for context
+    print(f"Context data: {context}")
+    
     html_string = render_to_string('invoice.html', context)
+    
+    # Create PDF with absolute URLs
     with tempfile.NamedTemporaryFile(suffix='.pdf', delete=False) as tmp_file:
-        HTML(string=html_string, base_url=request.build_absolute_uri('/')).write_pdf(tmp_file)
+        HTML(
+            string=html_string,
+            base_url=request.build_absolute_uri('/')
+        ).write_pdf(tmp_file)
         tmp_file_path = tmp_file.name
+    
     response = HttpResponse(open(tmp_file_path, 'rb'), content_type='application/pdf')
     response['Content-Disposition'] = f'filename="invoice_{booking.invoice_number}.pdf"'
+    
+    # Clean up the temporary file
+    os.unlink(tmp_file_path)
+    
     return response
 
 def rental_booking(request):

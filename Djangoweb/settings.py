@@ -29,14 +29,34 @@ print(f"\nBASE_DIR : {BASE_DIR}\n")
 SECRET_KEY = 'django-insecure-n3714lj&sdfv_e9qw4)z+zv@%4ugleb&bp=cwgu$@n%$%r_-&1'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = os.environ.get('DJANGO_DEBUG', 'True') == 'True'
 
+# Get the environment (development or production)
+ENVIRONMENT = os.environ.get('DJANGO_ENVIRONMENT', 'development')
+
+# Base allowed hosts
 ALLOWED_HOSTS = [
     '127.0.0.1',
     'localhost',
-    'tharoth.pythonanywhere.com',
-    'www.tharoth.pythonanywhere.com',
+    '.ngrok-free.app',  # Allow all ngrok-free.app subdomains
+    '*.ngrok-free.app',  # Alternative pattern for all ngrok-free.app subdomains
 ]
+
+# Add production hosts if in production
+if ENVIRONMENT == 'production':
+    ALLOWED_HOSTS.extend([
+        'tharoth.pythonanywhere.com',
+        'www.tharoth.pythonanywhere.com',
+    ])
+
+# Add specific ngrok host if provided
+ngrok_host = os.environ.get('NGROK_HOST')
+if ngrok_host:
+    ALLOWED_HOSTS.append(ngrok_host)
+
+print(f"Environment: {ENVIRONMENT}")
+print(f"Debug mode: {DEBUG}")
+print(f"Allowed hosts: {ALLOWED_HOSTS}")
 
 # Application definition
 INSTALLED_APPS = [
@@ -129,6 +149,11 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 # Configure whitenoise for production
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
+# Add this for serving static files in production
+WHITENOISE_USE_FINDERS = True
+WHITENOISE_MANIFEST_STRICT = False
+WHITENOISE_ALLOW_ALL_ORIGINS = True
+
 # Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
@@ -158,21 +183,49 @@ DEFAULT_FROM_EMAIL = os.environ.get('EMAIL_HOST_USER')
 # Telegram Bot Settings
 TELEGRAM_BOT_TOKEN = os.environ.get('TELEGRAM_BOT_TOKEN')
 TELEGRAM_CHAT_ID = os.environ.get('TELEGRAM_CHAT_ID', '1139756425')
-TELEGRAM_WEBHOOK_URL = 'https://tharoth.pythonanywhere.com/telegram/webhook/'
+
+# Set webhook URL based on environment
+if ENVIRONMENT == 'production':
+    TELEGRAM_WEBHOOK_URL = 'https://tharoth.pythonanywhere.com/telegram/webhook/'
+else:
+    # Use ngrok URL if available, otherwise use localhost
+    ngrok_host = os.environ.get('NGROK_HOST')
+    if ngrok_host:
+        TELEGRAM_WEBHOOK_URL = f'https://{ngrok_host}/telegram/webhook/'
+    else:
+        TELEGRAM_WEBHOOK_URL = 'http://localhost:8000/telegram/webhook/'
+
+print(f"Environment: {ENVIRONMENT}")
+print(f"Debug mode: {DEBUG}")
 print(f"Telegram Bot Token loaded: {'Yes' if TELEGRAM_BOT_TOKEN else 'No'}")
 print(f"Telegram Chat ID loaded: {TELEGRAM_CHAT_ID}")
 print(f"Telegram Webhook URL: {TELEGRAM_WEBHOOK_URL}")
 
-# Security settings for production
-SECURE_SSL_REDIRECT = True
-SESSION_COOKIE_SECURE = True
-CSRF_COOKIE_SECURE = True
-SECURE_BROWSER_XSS_FILTER = True
-SECURE_CONTENT_TYPE_NOSNIFF = True
-X_FRAME_OPTIONS = 'DENY'
-SECURE_HSTS_SECONDS = 31536000  # 1 year
-SECURE_HSTS_INCLUDE_SUBDOMAINS = True
-SECURE_HSTS_PRELOAD = True
+# Security settings based on environment
+if ENVIRONMENT == 'production':
+    SECURE_SSL_REDIRECT = True
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SECURE_BROWSER_XSS_FILTER = True
+    SECURE_CONTENT_TYPE_NOSNIFF = True
+    X_FRAME_OPTIONS = 'DENY'
+    SECURE_HSTS_SECONDS = 31536000  # 1 year
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
+else:
+    # Development settings
+    SECURE_SSL_REDIRECT = False
+    SESSION_COOKIE_SECURE = False
+    CSRF_COOKIE_SECURE = False
+    SECURE_BROWSER_XSS_FILTER = False
+    SECURE_CONTENT_TYPE_NOSNIFF = False
+    X_FRAME_OPTIONS = 'SAMEORIGIN'
+    SECURE_HSTS_SECONDS = 0
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = False
+    SECURE_HSTS_PRELOAD = False
+    SECURE_PROXY_SSL_HEADER = None
+    USE_X_FORWARDED_HOST = False
+    USE_X_FORWARDED_PORT = False
 
 # Load environment variables
 load_dotenv()
