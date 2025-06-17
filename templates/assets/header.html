@@ -1,6 +1,6 @@
 {% load static %}
-  <header id="header" class="header d-flex align-items-center">
 
+<header id="header" class="header d-flex align-items-center">
     <div class="container-fluid container-xl d-flex align-items-center justify-content-between">
       <a href="{% url 'home' %}" class="logo d-flex align-items-center">
         {% if general_info and general_info.company_logo %}
@@ -8,7 +8,6 @@
          {% else %}
             <img src="{% static 'assets/img/logo.svg' %}" alt="Default Logo">
         {% endif %}
-
       </a>
       <nav id="navbar" class="navbar">
         <ul>
@@ -23,7 +22,6 @@
 
       <i class="mobile-nav-toggle mobile-nav-show bi bi-list"></i>
       <i class="mobile-nav-toggle mobile-nav-hide d-none bi bi-x"></i>
-
     </div>
-  </header><!-- End Header -->
+</header><!-- End Header -->
   <!-- End Header -->   

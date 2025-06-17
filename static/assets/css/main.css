@@ -304,8 +304,9 @@ section {
 }
 
 .header .logo img {
-  max-height: 40px;
-  margin-right: 6px;
+  max-height: 70px;
+  width: auto;
+  transition: all 0.3s ease;
 }
 
 .header .logo h1 {
@@ -327,6 +328,12 @@ section {
 
 section {
   scroll-margin-top: 70px;
+}
+
+@media (max-width: 768px) {
+  .header .logo img {
+    max-height: 80px;
+  }
 }
 
 /*--------------------------------------------------------------
