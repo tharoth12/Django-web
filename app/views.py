@@ -639,9 +639,14 @@ def telegram_webhook(request):
         
     elif request.method == 'POST':
         try:
-            data = json.loads(request.body)
+            # Log raw request data
             print("\n=== Webhook Debug Info ===")
-            print(f"Received data: {data}")
+            print(f"Request method: {request.method}")
+            print(f"Request headers: {request.headers}")
+            print(f"Request body: {request.body}")
+            
+            data = json.loads(request.body)
+            print(f"\nParsed data: {data}")
             
             callback_query = data.get('callback_query', {})
             if callback_query:
@@ -651,6 +656,7 @@ def telegram_webhook(request):
                 
                 print(f"\nCallback data: {callback_data}")
                 print(f"Message: {message}")
+                print(f"Chat ID: {chat_id}")
                 
                 # Parse callback data
                 parts = callback_data.split('_')
