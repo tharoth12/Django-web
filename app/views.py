@@ -640,54 +640,59 @@ def telegram_webhook(request):
     elif request.method == 'POST':
         try:
             data = json.loads(request.body)
+            print("\n=== Webhook Debug Info ===")
+            print(f"Received data: {data}")
+            
             callback_query = data.get('callback_query', {})
             if callback_query:
                 callback_data = callback_query.get('data', '')
                 message = callback_query.get('message', {})
                 chat_id = message.get('chat', {}).get('id')
                 
+                print(f"\nCallback data: {callback_data}")
+                print(f"Message: {message}")
+                
                 # Parse callback data
-                if len(callback_data.split('_')) == 2:
-                    action, request_id = callback_data.split('_')
-                elif len(callback_data.split('_')) == 3:
-                    action, period, request_id = callback_data.split('_')
+                parts = callback_data.split('_')
+                if len(parts) == 3:
+                    request_type, action, request_id = parts
+                    print(f"\nParsed request_type: {request_type}, action: {action}, request_id: {request_id}")
+                elif len(parts) == 4:
+                    request_type, action, period, request_id = parts
                     action = f"{action}_{period}"
+                    print(f"\nParsed request_type: {request_type}, action: {action}, period: {period}, request_id: {request_id}")
                 else:
+                    print("\nInvalid callback data format")
                     return HttpResponse('Invalid callback data', status=400)
                 
                 # Try to get either a RentalBooking or ServiceRequest
                 try:
-                    booking = RentalBooking.objects.get(id=request_id)
-                    request_type = 'booking'
-                except RentalBooking.DoesNotExist:
-                    try:
+                    if request_type == 'service':
                         service_request = ServiceRequest.objects.get(id=request_id)
-                        request_type = 'service'
-                    except ServiceRequest.DoesNotExist:
-                        return HttpResponse('Request not found', status=404)
-                
-                if request_type == 'service':
-                    if action == 'approve':
-                        service_request.status = 'in_progress'
-                        service_request.save()
+                        print(f"\nFound service request: {service_request.id}")
                         
-                        # Calculate service costs
-                        base_cost = 100  # Base service cost
-                        onsite_fee = 50 if service_request.onsite_technician else 0
-                        priority_fee = {
-                            'low': 0,
-                            'medium': 25,
-                            'high': 50,
-                            'urgent': 100
-                        }.get(service_request.priority.lower(), 0)
-                        
-                        total_cost = base_cost + onsite_fee + priority_fee
-                        
-                        # Generate invoice number
-                        invoice_number = f"INV-{timezone.now().strftime('%Y%m%d')}-{service_request.id:04d}"
-                        
-                        # Send approval message
-                        approval_message = f"""
+                        if action == 'approve':
+                            print("Approving service request...")
+                            service_request.status = 'in_progress'
+                            service_request.save()
+                            
+                            # Calculate service costs
+                            base_cost = 100  # Base service cost
+                            onsite_fee = 50 if service_request.onsite_technician else 0
+                            priority_fee = {
+                                'low': 0,
+                                'medium': 25,
+                                'high': 50,
+                                'urgent': 100
+                            }.get(service_request.priority.lower(), 0)
+                            
+                            total_cost = base_cost + onsite_fee + priority_fee
+                            
+                            # Generate invoice number
+                            invoice_number = f"INV-{timezone.now().strftime('%Y%m%d')}-{service_request.id:04d}"
+                            
+                            # Send approval message
+                            approval_message = f"""
 ✅ Service Request Approved
 
 Service Request #{service_request.id} has been approved.
@@ -711,61 +716,64 @@ Cost Breakdown:
 
 Approved: {timezone.now().strftime('%Y-%m-%d %H:%M')}
 """
-                        # Send approval message
-                        send_telegram_message(approval_message)
-                        
-                        # Generate and send invoice
-                        try:
-                            template = get_template('service_invoice.html')
-                            html_string = template.render({
-                                'service_request': service_request,
-                                'general_info': GeneralInfo.objects.first(),
-                                'invoice_number': invoice_number,
-                                'base_cost': base_cost,
-                                'onsite_fee': onsite_fee,
-                                'priority_fee': priority_fee,
-                                'total_cost': total_cost
-                            })
+                            print("\nSending approval message...")
+                            # Send approval message
+                            send_telegram_message(approval_message)
+                            
+                            # Generate and send invoice
+                            try:
+                                print("\nGenerating invoice...")
+                                template = get_template('service_invoice.html')
+                                html_string = template.render({
+                                    'service_request': service_request,
+                                    'general_info': GeneralInfo.objects.first(),
+                                    'invoice_number': invoice_number,
+                                    'base_cost': base_cost,
+                                    'onsite_fee': onsite_fee,
+                                    'priority_fee': priority_fee,
+                                    'total_cost': total_cost
+                                })
 
-                            # Save PDF to temp file
-                            with tempfile.NamedTemporaryFile(suffix='.pdf', delete=False) as tmp_file:
-                                HTML(string=html_string, base_url=None).write_pdf(tmp_file)
-                                tmp_file_path = tmp_file.name
+                                # Save PDF to temp file
+                                with tempfile.NamedTemporaryFile(suffix='.pdf', delete=False) as tmp_file:
+                                    HTML(string=html_string, base_url=None).write_pdf(tmp_file)
+                                    tmp_file_path = tmp_file.name
 
-                            # Send PDF to Telegram
-                            bot_token = settings.TELEGRAM_BOT_TOKEN
-                            chat_id = settings.TELEGRAM_CHAT_ID
-                            url = f"https://api.telegram.org/bot{bot_token}/sendDocument"
-                            
-                            with open(tmp_file_path, 'rb') as pdf_file:
-                                files = {
-                                    'document': (
-                                        f'service_invoice_{service_request.id}.pdf',
-                                        pdf_file,
-                                        'application/pdf'
-                                    )
-                                }
-                                data = {
-                                    'chat_id': chat_id,
-                                    'caption': f"🧾 Service Invoice #{invoice_number}\nCustomer: {service_request.customer_name}"
-                                }
-                                response = requests.post(url, data=data, files=files)
+                                # Send PDF to Telegram
+                                bot_token = settings.TELEGRAM_BOT_TOKEN
+                                chat_id = settings.TELEGRAM_CHAT_ID
+                                url = f"https://api.telegram.org/bot{bot_token}/sendDocument"
                                 
-                                if response.status_code != 200:
-                                    print(f"Error sending invoice to Telegram: {response.text}")
+                                with open(tmp_file_path, 'rb') as pdf_file:
+                                    files = {
+                                        'document': (
+                                            f'service_invoice_{service_request.id}.pdf',
+                                            pdf_file,
+                                            'application/pdf'
+                                        )
+                                    }
+                                    data = {
+                                        'chat_id': chat_id,
+                                        'caption': f"🧾 Service Invoice #{invoice_number}\nCustomer: {service_request.customer_name}"
+                                    }
+                                    response = requests.post(url, data=data, files=files)
+                                    
+                                    if response.status_code != 200:
+                                        print(f"Error sending invoice to Telegram: {response.text}")
+                                    
+                                # Clean up temp file
+                                os.unlink(tmp_file_path)
                                 
-                            # Clean up temp file
-                            os.unlink(tmp_file_path)
-                            
-                        except Exception as e:
-                            print(f"Error generating/sending invoice: {str(e)}")
-                            error_message = f"⚠️ Error generating invoice: {str(e)}"
-                            send_telegram_message(error_message)
-                            
-                    elif action == 'reject':
-                        service_request.status = 'cancelled'
-                        service_request.save()
-                        rejection_message = f"""
+                            except Exception as e:
+                                print(f"Error generating/sending invoice: {str(e)}")
+                                error_message = f"⚠️ Error generating invoice: {str(e)}"
+                                send_telegram_message(error_message)
+                                
+                        elif action == 'reject':
+                            print("Rejecting service request...")
+                            service_request.status = 'cancelled'
+                            service_request.save()
+                            rejection_message = f"""
 ❌ Service Request Rejected
 
 Service Request #{service_request.id} has been rejected.
@@ -776,15 +784,18 @@ Email: {service_request.email if service_request.email else 'Not provided'}
 
 Rejected: {timezone.now().strftime('%Y-%m-%d %H:%M')}
 """
-                        send_telegram_message(rejection_message)
-                
-                elif request_type == 'booking':
-                    if action == 'approve':
-                        booking.status = 'approved'
-                        booking.save()
-                        # Update Google Sheet status
-                        update_sheet_status(booking)
-                        approval_message = f"""
+                            send_telegram_message(rejection_message)
+                    else:
+                        booking = RentalBooking.objects.get(id=request_id)
+                        print(f"\nFound booking request: {booking.id}")
+                        
+                        if action == 'approve':
+                            print("Approving booking...")
+                            booking.status = 'approved'
+                            booking.save()
+                            # Update Google Sheet status
+                            update_sheet_status(booking)
+                            approval_message = f"""
 Order Approved!
 
 Invoice: {booking.invoice_number}
@@ -802,15 +813,16 @@ Notes: {booking.notes or 'None'}
 
 Approved: {timezone.now().strftime('%Y-%m-%d %H:%M')}
 """
-                        send_telegram_message(approval_message)
-                        send_invoice_to_telegram(booking)
-                        notify_client_approval(booking, approved=True)
-                    elif action == 'reject':
-                        booking.status = 'rejected'
-                        booking.save()
-                        # Update Google Sheet status
-                        update_sheet_status(booking)
-                        rejection_message = f"""
+                            send_telegram_message(approval_message)
+                            send_invoice_to_telegram(booking)
+                            notify_client_approval(booking, approved=True)
+                        elif action == 'reject':
+                            print("Rejecting booking...")
+                            booking.status = 'rejected'
+                            booking.save()
+                            # Update Google Sheet status
+                            update_sheet_status(booking)
+                            rejection_message = f"""
 ❌ Order Request Rejected
 
 📋 Invoice: {booking.invoice_number}
@@ -824,31 +836,37 @@ Approved: {timezone.now().strftime('%Y-%m-%d %H:%M')}
 📅 Order Date: {booking.submitted_at.strftime('%Y-%m-%d %H:%M')}
 🕒 Rejected: {timezone.now().strftime('%Y-%m-%d %H:%M')}
 """
-                        if booking.rejection_reason:
-                            rejection_message += f"\n❗ Reason for rejection: {booking.rejection_reason}\n"
-                        rejection_message += f"\nPlease contact the customer at {booking.phone} to discuss the rejection."
-                        send_telegram_message(rejection_message)
-                        notify_client_approval(booking, approved=False)
+                            if booking.rejection_reason:
+                                rejection_message += f"\n❗ Reason for rejection: {booking.rejection_reason}\n"
+                            rejection_message += f"\nPlease contact the customer at {booking.phone} to discuss the rejection."
+                            send_telegram_message(rejection_message)
+                            notify_client_approval(booking, approved=False)
+                except (RentalBooking.DoesNotExist, ServiceRequest.DoesNotExist) as e:
+                    print(f"\nNo request found with ID: {request_id}")
+                    return HttpResponse('Request not found', status=404)
                 
                 # Answer the callback query to remove the loading state
                 bot_token = settings.TELEGRAM_BOT_TOKEN
                 callback_id = callback_query.get('id')
                 if callback_id:
+                    print("\nAnswering callback query...")
                     answer_url = f"https://api.telegram.org/bot{bot_token}/answerCallbackQuery"
                     response = requests.post(answer_url, json={
                         "callback_query_id": callback_id,
                         "text": "Action completed"
                     })
-                    print("Callback answer response:", response.json())
+                    print(f"Callback answer response: {response.json()}")
                 
                 return HttpResponse('OK')
             else:
+                print("\nNo callback query found in data")
                 return HttpResponse('No callback query', status=400)
                 
         except json.JSONDecodeError as e:
+            print(f"\nJSON decode error: {str(e)}")
             return HttpResponse('Invalid JSON', status=400)
         except Exception as e:
-            print(f"Error in webhook: {str(e)}")
+            print(f"\nError in webhook: {str(e)}")
             return HttpResponse(f'Error: {str(e)}', status=500)
     
     return HttpResponse('Method not allowed', status=405)
@@ -918,8 +936,8 @@ def service_request(request):
         keyboard = {
             'inline_keyboard': [
                 [
-                    {'text': '✅ Approve', 'callback_data': f'approve_{service_request.id}'},
-                    {'text': '❌ Reject', 'callback_data': f'reject_{service_request.id}'}
+                    {'text': '✅ Approve', 'callback_data': f'service_approve_{service_request.id}'},
+                    {'text': '❌ Reject', 'callback_data': f'service_reject_{service_request.id}'}
                 ]
             ]
         }
