@@ -187,6 +187,13 @@ TELEGRAM_CHAT_ID = os.environ.get('TELEGRAM_CHAT_ID', '1139756425')
 # Set webhook URL based on environment
 if ENVIRONMENT == 'production':
     TELEGRAM_WEBHOOK_URL = 'https://tharoth.pythonanywhere.com/telegram/webhook/'
+    # Ensure these settings are enabled in production
+    SECURE_SSL_REDIRECT = True
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+    USE_X_FORWARDED_HOST = True
+    USE_X_FORWARDED_PORT = True
 else:
     # Use ngrok URL if available, otherwise use localhost
     ngrok_host = os.environ.get('NGROK_HOST')
