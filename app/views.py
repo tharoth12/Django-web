@@ -633,7 +633,11 @@ def notify_client_approval(booking, approved=True):
 
 @csrf_exempt
 def telegram_webhook(request):
-    if request.method == 'POST':
+    if request.method == 'GET':
+        # Handle GET request (verification)
+        return HttpResponse('Webhook is working!')
+        
+    elif request.method == 'POST':
         try:
             data = json.loads(request.body)
             callback_query = data.get('callback_query', {})
