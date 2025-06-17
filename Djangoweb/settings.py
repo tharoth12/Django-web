@@ -38,8 +38,6 @@ ENVIRONMENT = os.environ.get('DJANGO_ENVIRONMENT', 'development')
 ALLOWED_HOSTS = [
     '127.0.0.1',
     'localhost',
-    '.ngrok-free.app',  # Allow all ngrok-free.app subdomains
-    '*.ngrok-free.app',  # Alternative pattern for all ngrok-free.app subdomains
 ]
 
 # Add production hosts if in production
@@ -47,12 +45,24 @@ if ENVIRONMENT == 'production':
     ALLOWED_HOSTS.extend([
         'tharoth.pythonanywhere.com',
         'www.tharoth.pythonanywhere.com',
+        '.pythonanywhere.com',  # Allow all pythonanywhere subdomains
     ])
-
-# Add specific ngrok host if provided
-ngrok_host = os.environ.get('NGROK_HOST')
-if ngrok_host:
-    ALLOWED_HOSTS.append(ngrok_host)
+    # Ensure these settings are enabled in production
+    SECURE_SSL_REDIRECT = True
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+    USE_X_FORWARDED_HOST = True
+    USE_X_FORWARDED_PORT = True
+    # Disable debug in production
+    DEBUG = False
+else:
+    # Use ngrok URL if available, otherwise use localhost
+    ngrok_host = os.environ.get('NGROK_HOST')
+    if ngrok_host:
+        ALLOWED_HOSTS.append(ngrok_host)
+        ALLOWED_HOSTS.append('.ngrok-free.app')  # Allow all ngrok-free.app subdomains
+    DEBUG = True
 
 print(f"Environment: {ENVIRONMENT}")
 print(f"Debug mode: {DEBUG}")
@@ -188,22 +198,6 @@ TELEGRAM_CHAT_ID = os.environ.get('TELEGRAM_CHAT_ID', '1139756425')
 if ENVIRONMENT == 'production':
     # Make sure this matches your PythonAnywhere domain exactly
     TELEGRAM_WEBHOOK_URL = 'https://tharoth.pythonanywhere.com/telegram/webhook/'
-    # Ensure these settings are enabled in production
-    SECURE_SSL_REDIRECT = True
-    SESSION_COOKIE_SECURE = True
-    CSRF_COOKIE_SECURE = True
-    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
-    USE_X_FORWARDED_HOST = True
-    USE_X_FORWARDED_PORT = True
-    # Add your domain to allowed hosts
-    ALLOWED_HOSTS = [
-        'tharoth.pythonanywhere.com',
-        'www.tharoth.pythonanywhere.com',
-        '127.0.0.1',
-        'localhost',
-    ]
-    # Disable debug in production
-    DEBUG = False
 else:
     # Use ngrok URL if available, otherwise use localhost
     ngrok_host = os.environ.get('NGROK_HOST')
@@ -211,7 +205,6 @@ else:
         TELEGRAM_WEBHOOK_URL = f'https://{ngrok_host}/telegram/webhook/'
     else:
         TELEGRAM_WEBHOOK_URL = 'http://localhost:8000/telegram/webhook/'
-    DEBUG = True
 
 print(f"Environment: {ENVIRONMENT}")
 print(f"Debug mode: {DEBUG}")
