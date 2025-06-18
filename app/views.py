@@ -666,6 +666,10 @@ def notify_client_approval(booking, approved=True):
         f"The SL Power Team"
     )
 
+    print(f"\n[notify_client_approval] Sending email to: {booking.email}")
+    print(f"Subject: {subject}")
+    print(f"Message: {message}")
+
     email = EmailMessage(
         subject,
         message,
@@ -683,10 +687,15 @@ def notify_client_approval(booking, approved=True):
                 tmp_file_path = tmp_file.name
             email.attach(f'invoice_{booking.invoice_number}.pdf', open(tmp_file_path, 'rb').read(), 'application/pdf')
             os.unlink(tmp_file_path)
+            print(f"[notify_client_approval] PDF invoice attached: invoice_{booking.invoice_number}.pdf")
         except Exception as e:
-            print(f"Error generating or attaching invoice PDF: {e}")
+            print(f"[notify_client_approval] Error generating or attaching invoice PDF: {e}")
 
-    email.send(fail_silently=False)
+    try:
+        email.send(fail_silently=False)
+        print(f"[notify_client_approval] Email sent successfully to {booking.email}")
+    except Exception as e:
+        print(f"[notify_client_approval] Error sending email: {e}")
 
 @csrf_exempt
 def telegram_webhook(request):
