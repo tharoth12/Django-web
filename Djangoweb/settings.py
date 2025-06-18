@@ -133,31 +133,15 @@ JAZZMIN_SETTINGS = {
     # Icons that are used when one is not manually specified
     "default_icon_parents": "fas fa-chevron-circle-right",
     "default_icon_children": "fas fa-circle",
-    #############
-    # UI Tweaks #
-    #############
-    # Relative paths to custom CSS/JS files (must be present in static files)
-    "custom_css": None,
-    "custom_js": None,
-    # Whether to show the UI customizer on the sidebar
+    
     "show_ui_builder": True,
-    ###############
-    # Change view #
-    ###############
-    # Render out the change view as a single form, or in tabs, current options are
-    # - single
-    # - horizontal_tabs (default)
-    # - vertical_tabs
-    # - collapsible
-    # - carousel
+   
     "changeform_format": "horizontal_tabs",
     # override change forms on a per modeladmin basis
     "changeform_format_overrides": {
         "auth.user": "collapsible",
         "auth.group": "vertical_tabs",
     },
-    # Add a language dropdown into the admin
-    "language_chooser": True,
 }
 
 # UI Customizer
