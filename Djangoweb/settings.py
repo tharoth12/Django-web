@@ -107,9 +107,11 @@ JAZZMIN_SETTINGS = {
     "topmenu_links": [
         {"name": "Home", "url": "admin:index", "permissions": ["auth.view_user"]},
         {"name": "View Site", "url": "/", "new_window": True},
-        {"model": "app.RentalBooking"},
-        {"model": "app.ServiceRequest"},
-        {"model": "app.Product"},
+        {"name": "Dashboard", "url": "admin:index", "icon": "fas fa-tachometer-alt"},
+        {"name": "Orders", "url": "admin:app_rentalbooking_changelist", "icon": "fas fa-shopping-cart"},
+        {"name": "Services", "url": "admin:app_servicerequest_changelist", "icon": "fas fa-tools"},
+        {"name": "Products", "url": "admin:app_product_changelist", "icon": "fas fa-bolt"},
+        {"name": "Messages", "url": "admin:app_contactmessage_changelist", "icon": "fas fa-envelope"},
     ],
     #############
     # Side Menu #
@@ -121,30 +123,36 @@ JAZZMIN_SETTINGS = {
     # Custom icons for side menu apps/models
     "icons": {
         "auth": "fas fa-users-cog",
+        "auth.user": "fas fa-user",
+        "auth.group": "fas fa-users",
         "app.rentalbooking": "fas fa-shopping-cart",
         "app.servicerequest": "fas fa-tools",
-        "app.product": "fas fa-bolt",  # Changed to a standard icon
+        "app.product": "fas fa-bolt",
         "app.generalinfo": "fas fa-info-circle",
         "app.service": "fas fa-cogs",
         "app.testimonial": "fas fa-comments",
         "app.frequentlyaskedquestion": "fas fa-question-circle",
         "app.herosection": "fas fa-images",
-        "app.contactformlog": "fas fa-envelope",  # Added for contact form logs
-        "app.faq": "fas fa-question",  # Added for FAQ
-        "app.profile": "fas fa-user-circle",  # Added for profile
+        "app.contactformlog": "fas fa-envelope",
+        "app.contactmessage": "fas fa-envelope-open-text",
+        "app.faq": "fas fa-question",
+        "app.profile": "fas fa-user-circle",
     },
     # Icons that are used when one is not manually specified
     "default_icon_parents": "fas fa-chevron-circle-right",
     "default_icon_children": "fas fa-circle",
     
-    # User profile settings
+    # User menu links
     "user_menu_links": [
         {"name": "Profile", "url": "admin:app_profile_change", "icon": "fas fa-user"},
         {"name": "Settings", "url": "admin:app_generalinfo_change", "icon": "fas fa-cog"},
+        {"name": "View Site", "url": "/", "icon": "fas fa-external-link-alt"},
     ],
     
+    # Show UI Builder
     "show_ui_builder": True,
-   
+    
+    # Change form format
     "changeform_format": "horizontal_tabs",
     # override change forms on a per modeladmin basis
     "changeform_format_overrides": {
@@ -160,36 +168,62 @@ JAZZMIN_SETTINGS = {
         "show_email": True,
         "show_phone": True,
     },
+    
+    # Custom CSS/JS
+    "custom_css": None,
+    "custom_js": None,
+    
+    # Order with respect to model name
+    "order_with_respect_to": ["auth", "app"],
+    
+    # Custom links to append to app groups
+    "custom_links": {
+        "app": [{
+            "name": "Make Messages", 
+            "url": "make_messages", 
+            "icon": "fas fa-comments",
+            "permissions": ["app.view_contactmessage"]
+        }]
+    },
+    
+    # Custom icons for side menu apps/models when collapsed
+    "icons_collapsed": {
+        "auth": "fas fa-users-cog",
+        "app": "fas fa-cogs",
+    },
+    
+    # Related modal
+    "related_modal_active": True,
 }
 
 # UI Customizer
 JAZZMIN_UI_TWEAKS = {
     "navbar_small_text": False,
     "footer_small_text": False,
-    "body_small_text": False,
+    "body_small_text": True,
     "brand_small_text": False,
-    "brand_colour": "navbar-primary",
-    "accent": "accent-primary",
-    "navbar": "navbar-dark",
+    "brand_colour": "navbar-secondary",
+    "accent": "accent-navy",
+    "navbar": "navbar-secondary navbar-dark",
     "no_navbar_border": False,
     "navbar_fixed": True,
     "layout_boxed": False,
     "footer_fixed": False,
     "sidebar_fixed": True,
-    "sidebar": "sidebar-dark-primary",
+    "sidebar": "sidebar-light-primary",
     "sidebar_nav_small_text": False,
-    "sidebar_disable_expand": False,
+    "sidebar_disable_expand": True,
     "sidebar_nav_child_indent": True,
-    "sidebar_nav_compact_style": False,
-    "sidebar_nav_legacy_style": False,
+    "sidebar_nav_compact_style": True,
+    "sidebar_nav_legacy_style": True,
     "sidebar_nav_flat_style": False,
-    "theme": "default",
+    "theme": "sandstone",
     "dark_mode_theme": None,
     "button_classes": {
         "primary": "btn-primary",
-        "secondary": "btn-secondary",
+        "secondary": "btn-outline-secondary",
         "info": "btn-info",
-        "warning": "btn-warning",
+        "warning": "btn-outline-warning",
         "danger": "btn-danger",
         "success": "btn-success"
     }
