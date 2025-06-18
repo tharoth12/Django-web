@@ -99,7 +99,7 @@ JAZZMIN_SETTINGS = {
     # The model admin to search from the search bar, search bar omitted if excluded
     "search_model": "app.RentalBooking",
     # Field name on user model that contains avatar ImageField/URLField/Charfield or a callable that receives the user
-    "user_avatar": None,
+    "user_avatar": "avatar",
     ############
     # Top Menu #
     ############
@@ -123,16 +123,25 @@ JAZZMIN_SETTINGS = {
         "auth": "fas fa-users-cog",
         "app.rentalbooking": "fas fa-shopping-cart",
         "app.servicerequest": "fas fa-tools",
-        "app.product": "fas fa-generator",
+        "app.product": "fas fa-bolt",  # Changed to a standard icon
         "app.generalinfo": "fas fa-info-circle",
         "app.service": "fas fa-cogs",
         "app.testimonial": "fas fa-comments",
         "app.frequentlyaskedquestion": "fas fa-question-circle",
         "app.herosection": "fas fa-images",
+        "app.contactformlog": "fas fa-envelope",  # Added for contact form logs
+        "app.faq": "fas fa-question",  # Added for FAQ
+        "app.profile": "fas fa-user-circle",  # Added for profile
     },
     # Icons that are used when one is not manually specified
     "default_icon_parents": "fas fa-chevron-circle-right",
     "default_icon_children": "fas fa-circle",
+    
+    # User profile settings
+    "user_menu_links": [
+        {"name": "Profile", "url": "admin:app_profile_change", "icon": "fas fa-user"},
+        {"name": "Settings", "url": "admin:app_generalinfo_change", "icon": "fas fa-cog"},
+    ],
     
     "show_ui_builder": True,
    
@@ -141,6 +150,15 @@ JAZZMIN_SETTINGS = {
     "changeform_format_overrides": {
         "auth.user": "collapsible",
         "auth.group": "vertical_tabs",
+    },
+    
+    # Profile settings
+    "profile_settings": {
+        "show_profile": True,
+        "show_avatar": True,
+        "show_name": True,
+        "show_email": True,
+        "show_phone": True,
     },
 }
 
