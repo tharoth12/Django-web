@@ -99,7 +99,7 @@ JAZZMIN_SETTINGS = {
     # The model admin to search from the search bar, search bar omitted if excluded
     "search_model": "app.RentalBooking",
     # Field name on user model that contains avatar ImageField/URLField/Charfield or a callable that receives the user
-    "user_avatar": "avatar",
+    "user_avatar": None,
     ############
     # Top Menu #
     ############
@@ -175,16 +175,6 @@ JAZZMIN_SETTINGS = {
     
     # Order with respect to model name
     "order_with_respect_to": ["auth", "app"],
-    
-    # Custom links to append to app groups
-    "custom_links": {
-        "app": [{
-            "name": "Make Messages", 
-            "url": "make_messages", 
-            "icon": "fas fa-comments",
-            "permissions": ["app.view_contactmessage"]
-        }]
-    },
     
     # Custom icons for side menu apps/models when collapsed
     "icons_collapsed": {
