@@ -94,7 +94,8 @@ def contact_form(request):
             name=name,
             email=email,
             subject=subject,
-            message=message
+            message=message,
+            created_at=timezone.now()
         )
 
         # Prepare email context
@@ -103,11 +104,13 @@ def contact_form(request):
             "email": email,
             "subject": subject,
             "message": message,
+            "time": timezone.now()
         }
         html_content = render_to_string('email.html', context)
 
         # Send email
         try:
+            # First try to send email
             send_mail(
                 subject=subject,
                 message=None,
@@ -117,7 +120,7 @@ def contact_form(request):
                 fail_silently=False,
             )
             
-            # Send Telegram notification
+            # If email sent successfully, send Telegram notification
             telegram_message = f"""
 📨 New Contact Message
 
@@ -132,13 +135,15 @@ def contact_form(request):
 """
             send_telegram_message(telegram_message)
             
-            messages.success(request, "Your message has been sent successfully!")
+            # Store success message in session
+            request.session['success_message'] = "Your message has been sent successfully! We will contact you soon."
+            return redirect('booking_success')
             
         except Exception as e:
             print(f"Error sending message: {str(e)}")
-            messages.error(request, "There was an error sending your message. Please try again later.")
+            error_message = str(e)
             
-            # Log the error
+            # Log the error with more details
             ContactFormlog.objects.create(
                 name=name,
                 email=email,
@@ -147,8 +152,34 @@ def contact_form(request):
                 action_time=timezone.now(),
                 is_success=False,
                 is_error=True,
-                error_message=str(e)
+                error_message=error_message
             )
+            
+            # Check if it's an authentication error
+            if "Authentication Required" in error_message:
+                messages.error(request, "Email service configuration error. Please contact the administrator.")
+            elif "SMTP" in error_message:
+                messages.error(request, "Email service temporarily unavailable. Please try again later.")
+            else:
+                messages.error(request, "There was an error sending your message. Please try again later.")
+            
+            # Still send Telegram notification even if email fails
+            telegram_message = f"""
+⚠️ New Contact Message (Email Failed)
+
+👤 From: {name}
+📧 Email: {email}
+📝 Subject: {subject}
+
+💬 Message:
+{message}
+
+⏰ Time: {timezone.now().strftime('%Y-%m-%d %H:%M')}
+
+❌ Email Error: {error_message}
+"""
+            send_telegram_message(telegram_message)
+            return redirect('home')
 
     return redirect('home')
 
@@ -1042,4 +1073,13 @@ def submit_booking(request):
     return render(request, 'booking_form.html', {'form': form})
 
 def booking_success(request):
-    return render(request, 'booking_success.html')
+    # Get success message from session
+    success_message = request.session.get('success_message')
+    # Clear the session message
+    if 'success_message' in request.session:
+        del request.session['success_message']
+    
+    context = {
+        'success_message': success_message
+    }
+    return render(request, 'booking_success.html', context)
