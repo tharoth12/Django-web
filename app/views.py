@@ -802,6 +802,8 @@ def telegram_webhook(request):
                     print(f"\nParsed service action: {action}, request_id: {request_id}")
                     from app.models import ServiceRequest
                     from django.shortcuts import get_object_or_404
+                    from django.core.mail import send_mail
+                    from django.conf import settings
                     service_request = get_object_or_404(ServiceRequest, id=request_id)
                     if action == 'approve':
                         service_request.status = 'in_progress'
@@ -825,6 +827,16 @@ Issue: {service_request.issue_description}
 Approved: {timezone.now().strftime('%Y-%m-%d %H:%M')}
 """
                         send_telegram_message(approval_message)
+                        # Send approval email to customer
+                        if service_request.email:
+                            subject = "Your Service Request Has Been Approved"
+                            message = (
+                                f"Dear {service_request.customer_name},\n\n"
+                                f"Your service request for {service_request.machine_type} ({service_request.service_type}) has been approved.\n"
+                                f"Our team will contact you soon to schedule the service.\n\n"
+                                f"Best regards,\nSL Power Team"
+                            )
+                            send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [service_request.email], fail_silently=False)
                     elif action == 'reject':
                         service_request.status = 'cancelled'
                         service_request.save()
@@ -846,12 +858,19 @@ Issue: {service_request.issue_description}
 Rejected: {timezone.now().strftime('%Y-%m-%d %H:%M')}
 """
                         send_telegram_message(rejection_message)
+                        # Send rejection email to customer
+                        if service_request.email:
+                            subject = "Your Service Request Has Been Rejected"
+                            message = (
+                                f"Dear {service_request.customer_name},\n\n"
+                                f"Unfortunately, your service request for {service_request.machine_type} ({service_request.service_type}) has been rejected.\n"
+                                f"Please contact us for more information.\n\n"
+                                f"Best regards,\nSL Power Team"
+                            )
+                            send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [service_request.email], fail_silently=False)
                     else:
                         print(f"Unknown service action: {action}")
                         return HttpResponse('Invalid service action', status=400)
-                else:
-                    print(f"Invalid callback data format: {callback_data}")
-                    return HttpResponse('Invalid callback data format', status=400)
                 
                 # Answer the callback query to remove the loading state
                 bot_token = settings.TELEGRAM_BOT_TOKEN
@@ -949,7 +968,6 @@ def service_request(request):
 
         # Send message with keyboard
         send_telegram_message(message, keyboard=keyboard)
-
         # If image was uploaded, send it separately
         if image:
             send_telegram_image(image)
