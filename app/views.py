@@ -729,20 +729,19 @@ def telegram_webhook(request):
                 print(f"Message: {json.dumps(message, indent=2)}")
                 print(f"Chat ID: {chat_id}")
                 
-                # Parse callback data
-                try:
-                    action, request_id = callback_data.split('_')
+                parts = callback_data.split('_')
+                print(f"Callback parts: {parts}")
+                
+                if len(parts) == 2:
+                    action, request_id = parts
                     print(f"\nParsed action: {action}, request_id: {request_id}")
-                    
                     try:
                         booking = RentalBooking.objects.get(id=request_id)
                         print(f"\nFound booking request: {booking.id}")
-                        
                         if action == 'approve':
                             print("Approving booking...")
                             booking.status = 'approved'
                             booking.save()
-                            # Update Google Sheet status
                             update_sheet_status(booking)
                             approval_message = f"""
 ✅ Order Approved!
@@ -769,7 +768,6 @@ def telegram_webhook(request):
                             print("Rejecting booking...")
                             booking.status = 'rejected'
                             booking.save()
-                            # Update Google Sheet status
                             update_sheet_status(booking)
                             rejection_message = f"""
 ❌ Order Request Rejected
@@ -796,12 +794,62 @@ def telegram_webhook(request):
                         else:
                             print(f"Unknown action: {action}")
                             return HttpResponse('Invalid action', status=400)
-                            
                     except RentalBooking.DoesNotExist:
                         print(f"\nNo booking found with ID: {request_id}")
                         return HttpResponse('Booking not found', status=404)
-                        
-                except ValueError:
+                elif len(parts) == 3 and parts[0] == 'service':
+                    _, action, request_id = parts
+                    print(f"\nParsed service action: {action}, request_id: {request_id}")
+                    from app.models import ServiceRequest
+                    from django.shortcuts import get_object_or_404
+                    service_request = get_object_or_404(ServiceRequest, id=request_id)
+                    if action == 'approve':
+                        service_request.status = 'in_progress'
+                        service_request.save()
+                        # Send approval message
+                        approval_message = f"""
+✅ Service Request Approved
+
+Service Request #{service_request.id} has been approved.
+Customer: {service_request.customer_name}
+Phone: {service_request.phone}
+Email: {service_request.email}
+
+Type: {service_request.service_type}
+Machine: {service_request.machine_type}
+Priority: {service_request.priority}
+Onsite: {'Yes' if service_request.onsite_technician else 'No'}
+
+Issue: {service_request.issue_description}
+
+Approved: {timezone.now().strftime('%Y-%m-%d %H:%M')}
+"""
+                        send_telegram_message(approval_message)
+                    elif action == 'reject':
+                        service_request.status = 'cancelled'
+                        service_request.save()
+                        rejection_message = f"""
+❌ Service Request Rejected
+
+Service Request #{service_request.id} has been rejected.
+Customer: {service_request.customer_name}
+Phone: {service_request.phone}
+Email: {service_request.email}
+
+Type: {service_request.service_type}
+Machine: {service_request.machine_type}
+Priority: {service_request.priority}
+Onsite: {'Yes' if service_request.onsite_technician else 'No'}
+
+Issue: {service_request.issue_description}
+
+Rejected: {timezone.now().strftime('%Y-%m-%d %H:%M')}
+"""
+                        send_telegram_message(rejection_message)
+                    else:
+                        print(f"Unknown service action: {action}")
+                        return HttpResponse('Invalid service action', status=400)
+                else:
                     print(f"Invalid callback data format: {callback_data}")
                     return HttpResponse('Invalid callback data format', status=400)
                 
