@@ -7,7 +7,7 @@
     <style>
         @font-face {
             font-family: 'Khmer OS';
-            src: url("{% static 'fonts/KhmerOS.ttf' %}");
+            src: url("{% static 'assets/font/khmerOS.ttf' %}");
         }
     
         body {
@@ -250,7 +250,8 @@
     </table>
     <div class="payment-summary">
         <div class="qr-box">
-            <img src="{{ qr_code_url }}" alt="QR Code">
+            <img src="{{ qr_code_url }}" alt="QR Code" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+            <div style="display: none; font-size: 8pt; color: #666;">QR Code Unavailable</div>
             <div>Scan to Pay</div>
         </div>
         <div class="payment-details">

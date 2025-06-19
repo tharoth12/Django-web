@@ -353,8 +353,34 @@ def generate_invoice(request, booking_id):
     general_info = GeneralInfo.objects.first()
     
     # Get the absolute URL for the QR code image
-    qr_code_url = request.build_absolute_uri(static('assets/img/QR.jpg'))
+    # For production (PythonAnywhere), use the full domain
+    if settings.ENVIRONMENT == 'production':
+        qr_code_url = f"https://tharoth.pythonanywhere.com{static('assets/img/QR.jpg')}"
+    else:
+        # For development, use the request to build absolute URL
+        qr_code_url = request.build_absolute_uri(static('assets/img/QR.jpg'))
+    
+    # Alternative: Use data URI for QR code to avoid static file issues
+    try:
+        qr_image_path = os.path.join(settings.STATIC_ROOT, 'assets', 'img', 'QR.jpg')
+        if not os.path.exists(qr_image_path):
+            qr_image_path = os.path.join(settings.BASE_DIR, 'static', 'assets', 'img', 'QR.jpg')
+        
+        if os.path.exists(qr_image_path):
+            import base64
+            with open(qr_image_path, 'rb') as img_file:
+                img_data = base64.b64encode(img_file.read()).decode('utf-8')
+                qr_code_url = f"data:image/jpeg;base64,{img_data}"
+                print("Using data URI for QR code")
+        else:
+            print(f"QR image not found at: {qr_image_path}")
+    except Exception as e:
+        print(f"Error creating data URI for QR code: {e}")
+        # Fall back to URL approach
+    
+    print(f"Environment: {settings.ENVIRONMENT}")
     print(f"QR Code URL: {qr_code_url}")  # Debug log
+    print(f"Static URL: {static('assets/img/QR.jpg')}")  # Debug log
     
     # Calculate rental months if it's a rental order
     months = None
@@ -379,9 +405,15 @@ def generate_invoice(request, booking_id):
     
     # Create PDF with absolute URLs
     with tempfile.NamedTemporaryFile(suffix='.pdf', delete=False) as tmp_file:
+        # Use the same base URL logic for WeasyPrint
+        if settings.ENVIRONMENT == 'production':
+            base_url = 'https://tharoth.pythonanywhere.com/'
+        else:
+            base_url = request.build_absolute_uri('/')
+            
         HTML(
             string=html_string,
-            base_url=request.build_absolute_uri('/')
+            base_url=base_url
         ).write_pdf(tmp_file)
         tmp_file_path = tmp_file.name
     
@@ -600,16 +632,59 @@ def send_invoice_to_telegram(booking):
     import os
 
     try:
-        # 1. Render the invoice HTML
+        # 1. Render the invoice HTML with proper QR code URL
         template = get_template('invoice.html')
+        
+        # Get the absolute URL for the QR code image
+        # For production (PythonAnywhere), use the full domain
+        if settings.ENVIRONMENT == 'production':
+            qr_code_url = f"https://tharoth.pythonanywhere.com{static('assets/img/QR.jpg')}"
+        else:
+            # For development, construct a basic URL
+            qr_code_url = f"http://localhost:8000{static('assets/img/QR.jpg')}"
+        
+        # Alternative: Use data URI for QR code to avoid static file issues
+        try:
+            qr_image_path = os.path.join(settings.STATIC_ROOT, 'assets', 'img', 'QR.jpg')
+            if not os.path.exists(qr_image_path):
+                qr_image_path = os.path.join(settings.BASE_DIR, 'static', 'assets', 'img', 'QR.jpg')
+            
+            if os.path.exists(qr_image_path):
+                import base64
+                with open(qr_image_path, 'rb') as img_file:
+                    img_data = base64.b64encode(img_file.read()).decode('utf-8')
+                    qr_code_url = f"data:image/jpeg;base64,{img_data}"
+                    print("Using data URI for QR code in send_invoice_to_telegram")
+            else:
+                print(f"QR image not found at: {qr_image_path}")
+        except Exception as e:
+            print(f"Error creating data URI for QR code in send_invoice_to_telegram: {e}")
+            # Fall back to URL approach
+        
+        # Calculate rental months if it's a rental order
+        months = None
+        if booking.order_type == 'rent' and booking.rental_date and booking.return_date:
+            months = (booking.return_date.year - booking.rental_date.year) * 12 + (booking.return_date.month - booking.rental_date.month)
+            if booking.return_date.day > booking.rental_date.day:
+                months += 1
+            months = max(1, months)  # Ensure at least 1 month
+        
         html_string = template.render({
             'booking': booking,
-            'general_info': GeneralInfo.objects.first()
+            'general_info': GeneralInfo.objects.first(),
+            'qr_code_url': qr_code_url,
+            'months': months,
         })
 
         # 2. Generate PDF and save to a temp file
         with tempfile.NamedTemporaryFile(suffix='.pdf', delete=False) as tmp_file:
-            HTML(string=html_string, base_url=None).write_pdf(tmp_file)
+            # Use the same base URL logic for WeasyPrint
+            if settings.ENVIRONMENT == 'production':
+                base_url = 'https://tharoth.pythonanywhere.com/'
+            else:
+                base_url = 'http://localhost:8000/'
+                
+            HTML(string=html_string, base_url=base_url).write_pdf(tmp_file)
             tmp_file_path = tmp_file.name
 
         # 3. Send the PDF to Telegram
@@ -672,17 +747,59 @@ def notify_client_approval(booking, approved=True):
         # Generate and attach PDF invoice if booking is approved
         if approved:
             try:
-                # Generate invoice PDF
+                # Generate invoice PDF with proper QR code URL
                 template = get_template('invoice.html')
+                
+                # Get the absolute URL for the QR code image
+                # For production (PythonAnywhere), use the full domain
+                if settings.ENVIRONMENT == 'production':
+                    qr_code_url = f"https://tharoth.pythonanywhere.com{static('assets/img/QR.jpg')}"
+                else:
+                    # For development, construct a basic URL
+                    qr_code_url = f"http://localhost:8000{static('assets/img/QR.jpg')}"
+                
+                # Alternative: Use data URI for QR code to avoid static file issues
+                try:
+                    qr_image_path = os.path.join(settings.STATIC_ROOT, 'assets', 'img', 'QR.jpg')
+                    if not os.path.exists(qr_image_path):
+                        qr_image_path = os.path.join(settings.BASE_DIR, 'static', 'assets', 'img', 'QR.jpg')
+                    
+                    if os.path.exists(qr_image_path):
+                        import base64
+                        with open(qr_image_path, 'rb') as img_file:
+                            img_data = base64.b64encode(img_file.read()).decode('utf-8')
+                            qr_code_url = f"data:image/jpeg;base64,{img_data}"
+                            print("Using data URI for QR code in notify_client_approval")
+                    else:
+                        print(f"QR image not found at: {qr_image_path}")
+                except Exception as e:
+                    print(f"Error creating data URI for QR code in notify_client_approval: {e}")
+                    # Fall back to URL approach
+                
+                # Calculate rental months if it's a rental order
+                months = None
+                if booking.order_type == 'rent' and booking.rental_date and booking.return_date:
+                    months = (booking.return_date.year - booking.rental_date.year) * 12 + (booking.return_date.month - booking.rental_date.month)
+                    if booking.return_date.day > booking.rental_date.day:
+                        months += 1
+                    months = max(1, months)  # Ensure at least 1 month
+                
                 html_string = template.render({
                     'booking': booking,
                     'general_info': GeneralInfo.objects.first(),
-                    'BASE_DIR': settings.BASE_DIR
+                    'qr_code_url': qr_code_url,
+                    'months': months,
                 })
                 
                 # Create PDF in memory
                 with tempfile.NamedTemporaryFile(suffix='.pdf', delete=False) as tmp_file:
-                    HTML(string=html_string, base_url=settings.BASE_DIR).write_pdf(tmp_file)
+                    # Use the same base URL logic for WeasyPrint
+                    if settings.ENVIRONMENT == 'production':
+                        base_url = 'https://tharoth.pythonanywhere.com/'
+                    else:
+                        base_url = 'http://localhost:8000/'
+                        
+                    HTML(string=html_string, base_url=base_url).write_pdf(tmp_file)
                     tmp_file_path = tmp_file.name
                 
                 # Attach PDF to email
@@ -1267,3 +1384,24 @@ def booking_success(request):
         'success_message': success_message
     }
     return render(request, 'booking_success.html', context)
+
+def test_qr_code(request):
+    """Test view to debug QR code URL generation"""
+    from django.http import JsonResponse
+    
+    # Test different URL generation methods
+    static_url = static('assets/img/QR.jpg')
+    
+    if settings.ENVIRONMENT == 'production':
+        qr_code_url = f"https://tharoth.pythonanywhere.com{static_url}"
+    else:
+        qr_code_url = request.build_absolute_uri(static_url)
+    
+    return JsonResponse({
+        'environment': settings.ENVIRONMENT,
+        'static_url': static_url,
+        'qr_code_url': qr_code_url,
+        'debug': settings.DEBUG,
+        'static_root': settings.STATIC_ROOT,
+        'static_url_setting': settings.STATIC_URL,
+    })

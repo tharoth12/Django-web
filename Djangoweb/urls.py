@@ -30,6 +30,7 @@ from app.views import (
     generate_service_invoice,
     handle_telegram_callback,
     booking_success,
+    test_qr_code,
 )
 
 urlpatterns = [
@@ -45,6 +46,7 @@ urlpatterns = [
     path('service/invoice/<int:service_request_id>/', generate_service_invoice, name='generate_service_invoice'),
     path('telegram/callback/', handle_telegram_callback, name='telegram_callback'),
     path('booking-success/', booking_success, name='booking_success'),
+    path('test-qr/', test_qr_code, name='test_qr_code'),
 ]
 
 # Serve media files in development
