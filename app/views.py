@@ -644,57 +644,104 @@ def send_invoice_to_telegram(booking):
         return False
 
 def notify_client_approval(booking, approved=True):
-    subject = "Your Request Has Been Approved" if approved else "Your Request Has Been Rejected"
-    message = (
-        f"Dear {booking.customer_name},\n\n"
-        f"We are pleased to inform you that your request for "
-        f"{booking.product.title if booking.product else 'our service'} has been "
-        f"{'approved' if approved else 'rejected'}.\n\n"
-        f"🧾 Booking Summary:\n"
-        f"- Invoice Number: {booking.invoice_number}\n"
-        f"- Order Type: {booking.order_type.capitalize()}\n"
-        f"- Price: ${booking.price:,.2f}\n"
-        f"- Status: {booking.status.capitalize()}\n"
-        f"- Submitted On: {booking.submitted_at.strftime('%Y-%m-%d %H:%M')}\n"
-    )
-    if not approved and booking.rejection_reason:
-        message += f"\n❗ Reason for rejection: {booking.rejection_reason}\n"
-    message += (
-        f"\nThank you for choosing SL Power. If you have any questions, feel free to contact vai Telegram https://t.me/Generator_cambodia .\n\n"
-        f"Best regards,\n"
-        f"The SL Power Team"
-    )
-
-    print(f"\n[notify_client_approval] Sending email to: {booking.email}")
-    print(f"Subject: {subject}")
-    print(f"Message: {message}")
-
-    email = EmailMessage(
-        subject,
-        message,
-        settings.DEFAULT_FROM_EMAIL,  # Use your configured sender
-        [booking.email],
-    )
-
-    # Generate and attach PDF invoice if booking is approved
-    if approved:
-        try:
-            template = get_template('invoice.html')
-            html_string = template.render({'booking': booking, 'general_info': GeneralInfo.objects.first()})
-            with tempfile.NamedTemporaryFile(suffix='.pdf', delete=False) as tmp_file:
-                HTML(string=html_string, base_url=None).write_pdf(tmp_file)
-                tmp_file_path = tmp_file.name
-            email.attach(f'invoice_{booking.invoice_number}.pdf', open(tmp_file_path, 'rb').read(), 'application/pdf')
-            os.unlink(tmp_file_path)
-            print(f"[notify_client_approval] PDF invoice attached: invoice_{booking.invoice_number}.pdf")
-        except Exception as e:
-            print(f"[notify_client_approval] Error generating or attaching invoice PDF: {e}")
-
     try:
+        subject = "Your Request Has Been Approved" if approved else "Your Request Has Been Rejected"
+        
+        # Create context for email template
+        context = {
+            'booking': booking,
+            'approved': approved,
+            'company_info': GeneralInfo.objects.first()
+        }
+        
+        # Render HTML email template
+        html_message = render_to_string('email.html', context)
+        
+        # Create EmailMessage object
+        email = EmailMessage(
+            subject=subject,
+            body=html_message,  # Use HTML message directly
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            to=[booking.email],
+            reply_to=[settings.DEFAULT_FROM_EMAIL],
+        )
+        
+        # Set content type to HTML
+        email.content_subtype = 'html'
+        
+        # Generate and attach PDF invoice if booking is approved
+        if approved:
+            try:
+                # Generate invoice PDF
+                template = get_template('invoice.html')
+                html_string = template.render({
+                    'booking': booking,
+                    'general_info': GeneralInfo.objects.first(),
+                    'BASE_DIR': settings.BASE_DIR
+                })
+                
+                # Create PDF in memory
+                with tempfile.NamedTemporaryFile(suffix='.pdf', delete=False) as tmp_file:
+                    HTML(string=html_string, base_url=settings.BASE_DIR).write_pdf(tmp_file)
+                    tmp_file_path = tmp_file.name
+                
+                # Attach PDF to email
+                with open(tmp_file_path, 'rb') as pdf_file:
+                    email.attach(f'invoice_{booking.invoice_number}.pdf', pdf_file.read(), 'application/pdf')
+                
+                # Clean up temp file
+                os.unlink(tmp_file_path)
+                
+            except Exception as e:
+                print(f"[notify_client_approval] Error generating invoice PDF: {e}")
+                # Continue sending email even if PDF generation fails
+                send_telegram_message(f"⚠️ Error generating invoice PDF for booking #{booking.id}: {str(e)}")
+        
+        # Send email
         email.send(fail_silently=False)
+        
         print(f"[notify_client_approval] Email sent successfully to {booking.email}")
+        
+        # Log successful email
+        ContactFormlog.objects.create(
+            email=booking.email,
+            subject=subject,
+            message=html_message,
+            action_time=timezone.now(),
+            is_success=True,
+            is_error=False
+        )
+        
+        return True
+        
     except Exception as e:
-        print(f"[notify_client_approval] Error sending email: {e}")
+        error_message = f"Error sending email: {str(e)}"
+        print(f"[notify_client_approval] {error_message}")
+        
+        # Log failed email attempt
+        ContactFormlog.objects.create(
+            email=booking.email,
+            subject=subject if 'subject' in locals() else 'Email Failed',
+            message=error_message,
+            action_time=timezone.now(),
+            is_success=False,
+            is_error=True,
+            error_message=error_message
+        )
+        
+        # Send error notification via Telegram
+        telegram_message = f"""
+⚠️ Email Delivery Failed
+
+Failed to send email to: {booking.email}
+Order: {booking.invoice_number}
+Error: {error_message}
+
+Please check the email settings and retry manually if needed.
+"""
+        send_telegram_message(telegram_message)
+        
+        return False
 
 @csrf_exempt
 def telegram_webhook(request):
@@ -703,18 +750,10 @@ def telegram_webhook(request):
         
     elif request.method == 'POST':
         try:
-            # Log raw request data
-            print("\n=== Webhook Debug Info ===")
-            print(f"Request method: {request.method}")
-            print(f"Content-Type: {request.headers.get('Content-Type', 'Not set')}")
-            print(f"Request body: {request.body.decode('utf-8')}")
-            
             # Parse JSON data
             try:
                 data = json.loads(request.body)
-                print(f"\nParsed data: {json.dumps(data, indent=2)}")
             except json.JSONDecodeError as e:
-                print(f"JSON decode error: {str(e)}")
                 return HttpResponse('Invalid JSON', status=400)
             
             # Handle callback queries
@@ -724,26 +763,22 @@ def telegram_webhook(request):
                 message = callback_query.get('message', {})
                 chat_id = message.get('chat', {}).get('id')
                 
-                print(f"\nCallback data: {callback_data}")
-                print(f"Message: {json.dumps(message, indent=2)}")
-                print(f"Chat ID: {chat_id}")
-                
                 parts = callback_data.split('_')
-                print(f"Callback parts: {parts}")
                 
-                if len(parts) == 2:
+                # Handle both 2-part (rental) and 3-part (service) callback data
+                if len(parts) == 2:  # Rental booking callbacks
                     action, request_id = parts
-                    print(f"\nParsed action: {action}, request_id: {request_id}")
                     try:
                         booking = RentalBooking.objects.get(id=request_id)
-                        print(f"\nFound booking request: {booking.id}")
+                        
                         if action == 'approve':
-                            print("Approving booking...")
                             booking.status = 'approved'
                             booking.save()
                             update_sheet_status(booking)
+                            
+                            # Send single approval notification
                             approval_message = f"""
-✅ Order Approved!
+✅ Rental Request #{booking.id} Approved
 
 📋 Invoice: {booking.invoice_number}
 👤 Customer: {booking.customer_name}
@@ -755,21 +790,28 @@ def telegram_webhook(request):
 💵 Deposit (30%): ${booking.deposit_amount:,.2f}
 💳 Balance: ${booking.balance_amount:,.2f}
 
-📍 Delivery: {booking.delivery_address}
+📍 Delivery: {booking.delivery_address or 'Not specified'}
 📝 Notes: {booking.notes or 'None'}
 
 ⏰ Approved: {timezone.now().strftime('%Y-%m-%d %H:%M')}
 """
                             send_telegram_message(approval_message)
                             send_invoice_to_telegram(booking)
-                            notify_client_approval(booking, approved=True)
+                            
+                            # Send email silently
+                            try:
+                                notify_client_approval(booking, approved=True)
+                            except Exception as e:
+                                print(f"Error sending approval email: {str(e)}")
+                            
                         elif action == 'reject':
-                            print("Rejecting booking...")
                             booking.status = 'rejected'
                             booking.save()
                             update_sheet_status(booking)
+                            
+                            # Send single rejection notification
                             rejection_message = f"""
-❌ Order Request Rejected
+❌ Rental Request #{booking.id} Rejected
 
 📋 Invoice: {booking.invoice_number}
 👤 Customer: {booking.customer_name}
@@ -780,116 +822,185 @@ def telegram_webhook(request):
 💰 Total: ${booking.price:,.2f}
 
 📅 Order Date: {booking.submitted_at.strftime('%Y-%m-%d %H:%M')}
-🕒 Rejected: {timezone.now().strftime('%Y-%m-%d %H:%M')}
+⏰ Rejected: {timezone.now().strftime('%Y-%m-%d %H:%M')}
+
+Please contact the customer to discuss the rejection.
 """
-                            if booking.rejection_reason:
-                                rejection_message += f"\n❗ Reason for rejection: {booking.rejection_reason}\n"
-                            rejection_message += f"\nPlease contact the customer at {booking.phone} to discuss the rejection."
                             send_telegram_message(rejection_message)
-                            notify_client_approval(booking, approved=False)
+                            
+                            # Send email silently
+                            try:
+                                notify_client_approval(booking, approved=False)
+                            except Exception as e:
+                                print(f"Error sending rejection email: {str(e)}")
+                                
                         elif action == 'invoice':
-                            print("Generating invoice...")
                             send_invoice_to_telegram(booking)
                         else:
-                            print(f"Unknown action: {action}")
                             return HttpResponse('Invalid action', status=400)
+                            
                     except RentalBooking.DoesNotExist:
-                        print(f"\nNo booking found with ID: {request_id}")
-                        return HttpResponse('Booking not found', status=404)
-                elif len(parts) == 3 and parts[0] == 'service':
-                    _, action, request_id = parts
-                    print(f"\nParsed service action: {action}, request_id: {request_id}")
-                    from app.models import ServiceRequest
-                    from django.shortcuts import get_object_or_404
-                    from django.core.mail import send_mail
-                    service_request = get_object_or_404(ServiceRequest, id=request_id)
-                    if action == 'approve':
-                        service_request.status = 'in_progress'
-                        service_request.save()
-                        # Send approval message
-                        approval_message = f"""
-✅ Service Request Approved
+                        error_message = f"⚠️ Could not find rental booking #{request_id}. The booking may have been deleted."
+                        send_telegram_message(error_message)
+                        
+                        # Show error in Telegram UI
+                        bot_token = settings.TELEGRAM_BOT_TOKEN
+                        callback_id = callback_query.get('id')
+                        if callback_id:
+                            answer_url = f"https://api.telegram.org/bot{bot_token}/answerCallbackQuery"
+                            requests.post(answer_url, json={
+                                "callback_query_id": callback_id,
+                                "text": "Error: Booking not found",
+                                "show_alert": True
+                            })
+                        return HttpResponse('OK')
+                        
+                elif len(parts) == 3:  # Service request callbacks
+                    action_type, action, request_id = parts
+                    
+                    if action_type == 'service':
+                        try:
+                            service_request = ServiceRequest.objects.get(id=request_id)
+                        except ServiceRequest.DoesNotExist:
+                            error_message = f"⚠️ Could not find service request #{request_id}. The request may have been deleted."
+                            send_telegram_message(error_message)
+                            
+                            # Show error in Telegram UI
+                            bot_token = settings.TELEGRAM_BOT_TOKEN
+                            callback_id = callback_query.get('id')
+                            if callback_id:
+                                answer_url = f"https://api.telegram.org/bot{bot_token}/answerCallbackQuery"
+                                requests.post(answer_url, json={
+                                    "callback_query_id": callback_id,
+                                    "text": "Error: Service request not found",
+                                    "show_alert": True
+                                })
+                            return HttpResponse('OK')
 
-Service Request #{service_request.id} has been approved.
-Customer: {service_request.customer_name}
-Phone: {service_request.phone}
-Email: {service_request.email}
+                        if action == 'approve':
+                            service_request.status = 'in_progress'
+                            service_request.save()
+                            
+                            # Send single approval notification
+                            approval_message = f"""
+✅ Service Request #{service_request.id} Approved
 
-Type: {service_request.service_type}
-Machine: {service_request.machine_type}
-Priority: {service_request.priority}
-Onsite: {'Yes' if service_request.onsite_technician else 'No'}
+👤 Customer: {service_request.customer_name}
+📞 Phone: {service_request.phone}
+📧 Email: {service_request.email}
 
-Issue: {service_request.issue_description}
+🔧 Service Details:
+• Type: {service_request.service_type}
+• Machine: {service_request.machine_type}
+• Priority: {service_request.priority}
+• Onsite: {'Yes' if service_request.onsite_technician else 'No'}
 
-Approved: {timezone.now().strftime('%Y-%m-%d %H:%M')}
+📅 Schedule:
+• Date: {service_request.preferred_date}
+• Time: {service_request.preferred_time or 'Not specified'}
+
+⏰ Approved: {timezone.now().strftime('%Y-%m-%d %H:%M')}
 """
-                        send_telegram_message(approval_message)
-                        # Send approval email to customer
-                        if service_request.email:
-                            subject = "Your Service Request Has Been Approved"
-                            message = (
-                                f"Dear {service_request.customer_name},\n\n"
-                                f"Your service request for {service_request.machine_type} ({service_request.service_type}) has been approved.\n"
-                                f"Our team will contact you soon to schedule the service.\n\n"
-                                f"Best regards,\nSL Power Team"
-                            )
-                            send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [service_request.email], fail_silently=False)
-                    elif action == 'reject':
-                        service_request.status = 'cancelled'
-                        service_request.save()
-                        rejection_message = f"""
-❌ Service Request Rejected
+                            send_telegram_message(approval_message)
+                            
+                            # Send email silently
+                            if service_request.email:
+                                try:
+                                    subject = "Your Service Request Has Been Approved"
+                                    message = (
+                                        f"Dear {service_request.customer_name},\n\n"
+                                        f"Your service request for {service_request.machine_type} ({service_request.service_type}) has been approved.\n"
+                                        f"Our team will contact you soon to schedule the service.\n\n"
+                                        f"Service Details:\n"
+                                        f"- Type: {service_request.service_type}\n"
+                                        f"- Machine: {service_request.machine_type}\n"
+                                        f"- Priority: {service_request.priority}\n"
+                                        f"- Scheduled Date: {service_request.preferred_date}\n"
+                                        f"- Scheduled Time: {service_request.preferred_time or 'Not specified'}\n\n"
+                                        f"If you need to reschedule or have any questions, please contact us.\n\n"
+                                        f"Best regards,\nSL Power Team"
+                                    )
+                                    send_mail(
+                                        subject,
+                                        message,
+                                        settings.DEFAULT_FROM_EMAIL,
+                                        [service_request.email],
+                                        fail_silently=True
+                                    )
+                                except Exception as e:
+                                    print(f"Error sending approval email: {str(e)}")
 
-Service Request #{service_request.id} has been rejected.
-Customer: {service_request.customer_name}
-Phone: {service_request.phone}
-Email: {service_request.email}
+                        elif action == 'reject':
+                            service_request.status = 'cancelled'
+                            service_request.save()
+                            
+                            # Send single rejection notification
+                            rejection_message = f"""
+❌ Service Request #{service_request.id} Rejected
 
-Type: {service_request.service_type}
-Machine: {service_request.machine_type}
-Priority: {service_request.priority}
-Onsite: {'Yes' if service_request.onsite_technician else 'No'}
+👤 Customer: {service_request.customer_name}
+📞 Phone: {service_request.phone}
+📧 Email: {service_request.email}
 
-Issue: {service_request.issue_description}
+🔧 Service Details:
+• Type: {service_request.service_type}
+• Machine: {service_request.machine_type}
+• Priority: {service_request.priority}
 
-Rejected: {timezone.now().strftime('%Y-%m-%d %H:%M')}
+⏰ Rejected: {timezone.now().strftime('%Y-%m-%d %H:%M')}
+
+Please contact the customer to discuss alternative solutions.
 """
-                        send_telegram_message(rejection_message)
-                        # Send rejection email to customer
-                        if service_request.email:
-                            subject = "Your Service Request Has Been Rejected"
-                            message = (
-                                f"Dear {service_request.customer_name},\n\n"
-                                f"Unfortunately, your service request for {service_request.machine_type} ({service_request.service_type}) has been rejected.\n"
-                                f"Please contact us for more information.\n\n"
-                                f"Best regards,\nSL Power Team"
-                            )
-                            send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [service_request.email], fail_silently=False)
+                            send_telegram_message(rejection_message)
+                            
+                            # Send email silently
+                            if service_request.email:
+                                try:
+                                    subject = "Your Service Request Status Update"
+                                    message = (
+                                        f"Dear {service_request.customer_name},\n\n"
+                                        f"Regarding your service request for {service_request.machine_type}:\n\n"
+                                        f"We regret to inform you that we are unable to process your request at this time. "
+                                        f"Our team will contact you shortly to discuss alternative solutions.\n\n"
+                                        f"Service Details:\n"
+                                        f"- Type: {service_request.service_type}\n"
+                                        f"- Machine: {service_request.machine_type}\n"
+                                        f"- Requested Date: {service_request.preferred_date}\n\n"
+                                        f"If you have any questions, please don't hesitate to contact us.\n\n"
+                                        f"Best regards,\nSL Power Team"
+                                    )
+                                    send_mail(
+                                        subject,
+                                        message,
+                                        settings.DEFAULT_FROM_EMAIL,
+                                        [service_request.email],
+                                        fail_silently=True
+                                    )
+                                except Exception as e:
+                                    print(f"Error sending rejection email: {str(e)}")
+                        else:
+                            return HttpResponse('Invalid action', status=400)
                     else:
-                        print(f"Unknown service action: {action}")
-                        return HttpResponse('Invalid service action', status=400)
+                        return HttpResponse('Invalid action type', status=400)
                 
-                # Answer the callback query to remove the loading state
+                # Answer the callback query
                 bot_token = settings.TELEGRAM_BOT_TOKEN
                 callback_id = callback_query.get('id')
                 if callback_id:
-                    print("\nAnswering callback query...")
                     answer_url = f"https://api.telegram.org/bot{bot_token}/answerCallbackQuery"
-                    response = requests.post(answer_url, json={
+                    requests.post(answer_url, json={
                         "callback_query_id": callback_id,
-                        "text": "Action completed"
+                        "text": "Action completed successfully"
                     })
-                    print(f"Callback answer response: {response.json()}")
                 
                 return HttpResponse('OK')
             else:
-                print("\nNo callback query found in data")
                 return HttpResponse('No callback query', status=400)
                 
         except Exception as e:
-            print(f"\nError in webhook: {str(e)}")
-            return HttpResponse(f'Error: {str(e)}', status=500)
+            error_message = f"⚠️ Webhook error: {str(e)}"
+            send_telegram_message(error_message)
+            return HttpResponse('Internal error', status=500)
     
     return HttpResponse('Method not allowed', status=405)
 

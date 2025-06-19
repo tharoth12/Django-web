@@ -1,87 +1,111 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <title>Contact Form Submission</title>
+    <meta charset="utf-8">
     <style>
         body {
             font-family: Arial, sans-serif;
-            background-color: #424242;
+            line-height: 1.6;
             color: #333;
-            padding: 20px;
-            margin: 0;
-        }
-
-        .email-container {
             max-width: 600px;
             margin: 0 auto;
-            background-color: #fff;
-            padding: 30px;
-            border-radius: 8px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            padding: 20px;
         }
-
-        h1 {
-            color: #808080;
-            margin-bottom: 25px;
-            border-bottom: 2px solid #808080;
-            padding-bottom: 10px;
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
         }
-
-        .message-box {
-            background-color: #f5f5f5;
-            padding: 15px;
-            border-radius: 5px;
-            margin: 15px 0;
+        .logo {
+            max-width: 150px;
+            height: auto;
         }
-
-        .info-item {
-            margin-bottom: 15px;
-            padding: 10px;
-            border-left: 3px solid #808080;
+        .content {
             background-color: #f9f9f9;
+            padding: 20px;
+            border-radius: 5px;
         }
-
-        strong {
-            color: #808080;
-            display: inline-block;
-            width: 80px;
+        .booking-details {
+            margin: 20px 0;
+            padding: 15px;
+            background-color: #fff;
+            border-left: 4px solid #28a745;
         }
-
+        .booking-details.rejected {
+            border-left-color: #dc3545;
+        }
         .footer {
             margin-top: 30px;
             padding-top: 20px;
             border-top: 1px solid #eee;
-            color: #666;
+            text-align: center;
             font-size: 0.9em;
+            color: #666;
+        }
+        .contact-link {
+            color: #007bff;
+            text-decoration: none;
+        }
+        .status-badge {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 3px;
+            font-weight: bold;
+            color: #fff;
+            background-color: #28a745;
+        }
+        .status-badge.rejected {
+            background-color: #dc3545;
         }
     </style>
 </head>
 <body>
-    <div class="email-container">
-        <h1>New Contact Message</h1>
-        
-        <div class="info-item">
-            <strong>Name:</strong> {{ name }}
-        </div>
-        
-        <div class="info-item">
-            <strong>Email:</strong> {{ email }}
-        </div>
-        
-        <div class="info-item">
-            <strong>Subject:</strong> {{ subject }}
-        </div>
-        
-        <div class="message-box">
-            <strong>Message:</strong><br>
-            {{ message }}
+    <div class="header">
+        {% if general_info and general_info.company_logo %}
+            <img src="{{ general_info.company_logo.url }}" alt="{{ company_info.company_name }}" class="logo">
+        {% endif %}
+        <h2>{{ company_info.company_name }}</h2>
+    </div>
+
+    <div class="content">
+        <p>Dear {{ booking.customer_name }},</p>
+
+        <p>{% if approved %}
+            We are pleased to inform you that your request for <strong>{{ booking.product.title }}</strong> has been approved.
+        {% else %}
+            We regret to inform you that your request for <strong>{{ booking.product.title }}</strong> has been rejected.
+        {% endif %}</p>
+
+        <div class="booking-details {% if not approved %}rejected{% endif %}">
+            <h3>🧾 Booking Summary</h3>
+            <p><strong>Invoice Number:</strong> {{ booking.invoice_number }}</p>
+            <p><strong>Order Type:</strong> {{ booking.order_type|title }}</p>
+            <p><strong>Price:</strong> ${{ booking.price|floatformat:2 }}</p>
+            <p><strong>Status:</strong> <span class="status-badge {% if not approved %}rejected{% endif %}">{{ booking.status|title }}</span></p>
+            <p><strong>Submitted On:</strong> {{ booking.submitted_at|date:"Y-m-d H:i" }}</p>
+            
+            {% if not approved and booking.rejection_reason %}
+                <p><strong>❗ Reason for rejection:</strong> {{ booking.rejection_reason }}</p>
+            {% endif %}
+
+            {% if approved %}
+                <p><strong>📎 Attachment:</strong> Please find the invoice attached to this email for your records.</p>
+            {% endif %}
         </div>
 
-        <div class="footer">
-            <p>This message was sent from the contact form on SL Power website.</p>
-            <p>Time: {{ time|date:"F j, Y, g:i a" }}</p>
-        </div>
+        <p>Thank you for choosing {{ company_info.company_name }}. If you have any questions, feel free to contact us via Telegram at <a href="https://t.me/Generator_cambodia" class="contact-link">@Generator_cambodia</a>.</p>
+    </div>
+
+    <div class="footer">
+        <p>Best regards,<br>The {{ company_info.company_name }} Team</p>
+        {% if company_info.phone %}
+            <p>📞 {{ company_info.phone }}</p>
+        {% endif %}
+        {% if company_info.email %}
+            <p>📧 {{ company_info.email }}</p>
+        {% endif %}
+        {% if company_info.location %}
+            <p>📍 {{ company_info.location }}</p>
+        {% endif %}
     </div>
 </body>
 </html>

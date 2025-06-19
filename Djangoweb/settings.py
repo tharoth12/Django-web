@@ -325,28 +325,25 @@ EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
+EMAIL_USE_SSL = False  # This should be False when using TLS
 EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER')
 EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD')
 DEFAULT_FROM_EMAIL = os.environ.get('EMAIL_HOST_USER')
-EMAIL_USE_SSL = False
-
-# For development/testing, you can use console backend
-if DEBUG:
-    EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
-    print("Using console email backend for development")
-else:
-    # Production email settings
-    EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-    print("Using SMTP email backend for production")
 
 # Print email settings for debugging
 print("\nEmail Configuration:")
 print(f"EMAIL_HOST: {EMAIL_HOST}")
 print(f"EMAIL_PORT: {EMAIL_PORT}")
 print(f"EMAIL_USE_TLS: {EMAIL_USE_TLS}")
+print(f"EMAIL_USE_SSL: {EMAIL_USE_SSL}")
 print(f"EMAIL_HOST_USER: {EMAIL_HOST_USER}")
 print(f"DEFAULT_FROM_EMAIL: {DEFAULT_FROM_EMAIL}")
 print(f"EMAIL_BACKEND: {EMAIL_BACKEND}")
+
+# For development/testing, use SMTP backend always to catch real issues
+if DEBUG:
+    EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+    print("Using SMTP email backend for debugging")
 
 # Telegram Bot Settings
 TELEGRAM_BOT_TOKEN = os.environ.get('TELEGRAM_BOT_TOKEN')
