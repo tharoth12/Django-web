@@ -672,7 +672,7 @@ def notify_client_approval(booking, approved=True):
     email = EmailMessage(
         subject,
         message,
-        None,  # Uses DEFAULT_FROM_EMAIL
+        settings.DEFAULT_FROM_EMAIL,  # Use your configured sender
         [booking.email],
     )
 
