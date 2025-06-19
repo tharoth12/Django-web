@@ -31,7 +31,7 @@
             </div>
             
             <!-- Additional Images -->
-            <div class="product-additional-images">
+            <div class="row product-additional-images justify-content-center">
                 {% for image in product.images.all %}
                     <div class="col-6 mb-3">
                         <img src="{{ image.image.url }}" class="img-fluid rounded shadow" alt="Product Image {{ forloop.counter }}">

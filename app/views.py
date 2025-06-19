@@ -22,6 +22,7 @@ from app.models import (
    HeroSection,
    RentalBooking,
    ServiceRequest,
+   ContactMessage,
 )
 from decimal import Decimal
 from django.views.decorators.csrf import csrf_exempt
@@ -81,55 +82,106 @@ def index (request):
    return render(request, "index.html" , context)
    
 def contact_form(request):
-   if request.method == 'POST':
-      print("\nUser has submit a contact form\n")
-      name = request.POST.get('name')
-      email = request.POST.get('email')
-      subject = request.POST.get ('subject')
-      message = request.POST.get ('message')
+    if request.method == 'POST':
+        print("\nUser has submitted a contact form\n")
+        name = request.POST.get('name')
+        email = request.POST.get('email')
+        subject = request.POST.get('subject')
+        message = request.POST.get('message')
 
-      context = {
-         "name":name,
-         "email":email,
-         "subject": subject,
-         "message": message,
-      }
-      html_content  = render_to_string('email.html', context)
-
-      is_success = False
-      is_error = False
-      error_message = ""
-      
-      try:
-         send_mail(
+        # Create contact message
+        contact_message = ContactMessage.objects.create(
+            name=name,
+            email=email,
             subject=subject,
-            message=None,
-            html_message=html_content,
-            from_email=settings.EMAIL_HOST_USER,
-            recipient_list=[settings.EMAIL_HOST_USER],
-            fail_silently= False,
-         )
-      except Exception as e:
-         is_error = True
-         error_message = str(e)
-         messages.error(request, "There is an error , cound not send email")
-      else :
-         is_success = True
+            message=message,
+            created_at=timezone.now()
+        )
 
-         messages.success(request, "Email has been sent")
+        # Prepare email context
+        context = {
+            "name": name,
+            "email": email,
+            "subject": subject,
+            "message": message,
+            "time": timezone.now()
+        }
+        html_content = render_to_string('email.html', context)
 
-      ContactFormlog.objects.create (
-         name = name,
-         email = email,
-         subject = subject,
-         action_time = timezone.now(),
-         is_success = is_success,
-         is_error = is_error,
-         error_message = error_message,
+        # Send email
+        try:
+            # First try to send email
+            send_mail(
+                subject=subject,
+                message=None,
+                html_message=html_content,
+                from_email=settings.EMAIL_HOST_USER,
+                recipient_list=[settings.EMAIL_HOST_USER],
+                fail_silently=False,
+            )
+            
+            # If email sent successfully, send Telegram notification
+            telegram_message = f"""
+📨 New Contact Message
 
-      )
+👤 From: {name}
+📧 Email: {email}
+📝 Subject: {subject}
 
-   return redirect('home') 
+💬 Message:
+{message}
+
+⏰ Time: {timezone.now().strftime('%Y-%m-%d %H:%M')}
+"""
+            send_telegram_message(telegram_message)
+            
+            # Store success message in session
+            request.session['success_message'] = "Your message has been sent successfully! We will contact you soon."
+            return redirect('booking_success')
+            
+        except Exception as e:
+            print(f"Error sending message: {str(e)}")
+            error_message = str(e)
+            
+            # Log the error with more details
+            ContactFormlog.objects.create(
+                name=name,
+                email=email,
+                subject=subject,
+                message=message,
+                action_time=timezone.now(),
+                is_success=False,
+                is_error=True,
+                error_message=error_message
+            )
+            
+            # Check if it's an authentication error
+            if "Authentication Required" in error_message:
+                messages.error(request, "Email service configuration error. Please contact the administrator.")
+            elif "SMTP" in error_message:
+                messages.error(request, "Email service temporarily unavailable. Please try again later.")
+            else:
+                messages.error(request, "There was an error sending your message. Please try again later.")
+            
+            # Still send Telegram notification even if email fails
+            telegram_message = f"""
+⚠️ New Contact Message (Email Failed)
+
+👤 From: {name}
+📧 Email: {email}
+📝 Subject: {subject}
+
+💬 Message:
+{message}
+
+⏰ Time: {timezone.now().strftime('%Y-%m-%d %H:%M')}
+
+❌ Email Error: {error_message}
+"""
+            send_telegram_message(telegram_message)
+            return redirect('home')
+
+    return redirect('home')
 
 def product_detail(request, product_id):
     product = get_object_or_404(Product, id=product_id)
@@ -614,6 +666,10 @@ def notify_client_approval(booking, approved=True):
         f"The SL Power Team"
     )
 
+    print(f"\n[notify_client_approval] Sending email to: {booking.email}")
+    print(f"Subject: {subject}")
+    print(f"Message: {message}")
+
     email = EmailMessage(
         subject,
         message,
@@ -631,10 +687,15 @@ def notify_client_approval(booking, approved=True):
                 tmp_file_path = tmp_file.name
             email.attach(f'invoice_{booking.invoice_number}.pdf', open(tmp_file_path, 'rb').read(), 'application/pdf')
             os.unlink(tmp_file_path)
+            print(f"[notify_client_approval] PDF invoice attached: invoice_{booking.invoice_number}.pdf")
         except Exception as e:
-            print(f"Error generating or attaching invoice PDF: {e}")
+            print(f"[notify_client_approval] Error generating or attaching invoice PDF: {e}")
 
-    email.send(fail_silently=False)
+    try:
+        email.send(fail_silently=False)
+        print(f"[notify_client_approval] Email sent successfully to {booking.email}")
+    except Exception as e:
+        print(f"[notify_client_approval] Error sending email: {e}")
 
 @csrf_exempt
 def telegram_webhook(request):
@@ -668,20 +729,19 @@ def telegram_webhook(request):
                 print(f"Message: {json.dumps(message, indent=2)}")
                 print(f"Chat ID: {chat_id}")
                 
-                # Parse callback data
-                try:
-                    action, request_id = callback_data.split('_')
+                parts = callback_data.split('_')
+                print(f"Callback parts: {parts}")
+                
+                if len(parts) == 2:
+                    action, request_id = parts
                     print(f"\nParsed action: {action}, request_id: {request_id}")
-                    
                     try:
                         booking = RentalBooking.objects.get(id=request_id)
                         print(f"\nFound booking request: {booking.id}")
-                        
                         if action == 'approve':
                             print("Approving booking...")
                             booking.status = 'approved'
                             booking.save()
-                            # Update Google Sheet status
                             update_sheet_status(booking)
                             approval_message = f"""
 ✅ Order Approved!
@@ -708,7 +768,6 @@ def telegram_webhook(request):
                             print("Rejecting booking...")
                             booking.status = 'rejected'
                             booking.save()
-                            # Update Google Sheet status
                             update_sheet_status(booking)
                             rejection_message = f"""
 ❌ Order Request Rejected
@@ -735,14 +794,83 @@ def telegram_webhook(request):
                         else:
                             print(f"Unknown action: {action}")
                             return HttpResponse('Invalid action', status=400)
-                            
                     except RentalBooking.DoesNotExist:
                         print(f"\nNo booking found with ID: {request_id}")
                         return HttpResponse('Booking not found', status=404)
-                        
-                except ValueError:
-                    print(f"Invalid callback data format: {callback_data}")
-                    return HttpResponse('Invalid callback data format', status=400)
+                elif len(parts) == 3 and parts[0] == 'service':
+                    _, action, request_id = parts
+                    print(f"\nParsed service action: {action}, request_id: {request_id}")
+                    from app.models import ServiceRequest
+                    from django.shortcuts import get_object_or_404
+                    from django.core.mail import send_mail
+                    from django.conf import settings
+                    service_request = get_object_or_404(ServiceRequest, id=request_id)
+                    if action == 'approve':
+                        service_request.status = 'in_progress'
+                        service_request.save()
+                        # Send approval message
+                        approval_message = f"""
+✅ Service Request Approved
+
+Service Request #{service_request.id} has been approved.
+Customer: {service_request.customer_name}
+Phone: {service_request.phone}
+Email: {service_request.email}
+
+Type: {service_request.service_type}
+Machine: {service_request.machine_type}
+Priority: {service_request.priority}
+Onsite: {'Yes' if service_request.onsite_technician else 'No'}
+
+Issue: {service_request.issue_description}
+
+Approved: {timezone.now().strftime('%Y-%m-%d %H:%M')}
+"""
+                        send_telegram_message(approval_message)
+                        # Send approval email to customer
+                        if service_request.email:
+                            subject = "Your Service Request Has Been Approved"
+                            message = (
+                                f"Dear {service_request.customer_name},\n\n"
+                                f"Your service request for {service_request.machine_type} ({service_request.service_type}) has been approved.\n"
+                                f"Our team will contact you soon to schedule the service.\n\n"
+                                f"Best regards,\nSL Power Team"
+                            )
+                            send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [service_request.email], fail_silently=False)
+                    elif action == 'reject':
+                        service_request.status = 'cancelled'
+                        service_request.save()
+                        rejection_message = f"""
+❌ Service Request Rejected
+
+Service Request #{service_request.id} has been rejected.
+Customer: {service_request.customer_name}
+Phone: {service_request.phone}
+Email: {service_request.email}
+
+Type: {service_request.service_type}
+Machine: {service_request.machine_type}
+Priority: {service_request.priority}
+Onsite: {'Yes' if service_request.onsite_technician else 'No'}
+
+Issue: {service_request.issue_description}
+
+Rejected: {timezone.now().strftime('%Y-%m-%d %H:%M')}
+"""
+                        send_telegram_message(rejection_message)
+                        # Send rejection email to customer
+                        if service_request.email:
+                            subject = "Your Service Request Has Been Rejected"
+                            message = (
+                                f"Dear {service_request.customer_name},\n\n"
+                                f"Unfortunately, your service request for {service_request.machine_type} ({service_request.service_type}) has been rejected.\n"
+                                f"Please contact us for more information.\n\n"
+                                f"Best regards,\nSL Power Team"
+                            )
+                            send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [service_request.email], fail_silently=False)
+                    else:
+                        print(f"Unknown service action: {action}")
+                        return HttpResponse('Invalid service action', status=400)
                 
                 # Answer the callback query to remove the loading state
                 bot_token = settings.TELEGRAM_BOT_TOKEN
@@ -840,7 +968,6 @@ def service_request(request):
 
         # Send message with keyboard
         send_telegram_message(message, keyboard=keyboard)
-
         # If image was uploaded, send it separately
         if image:
             send_telegram_image(image)
@@ -1021,4 +1148,13 @@ def submit_booking(request):
     return render(request, 'booking_form.html', {'form': form})
 
 def booking_success(request):
-    return render(request, 'booking_success.html')
+    # Get success message from session
+    success_message = request.session.get('success_message')
+    # Clear the session message
+    if 'success_message' in request.session:
+        del request.session['success_message']
+    
+    context = {
+        'success_message': success_message
+    }
+    return render(request, 'booking_success.html', context)

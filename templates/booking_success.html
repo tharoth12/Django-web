@@ -81,7 +81,13 @@
             </svg>
         </div>
         <h2>Thank You!</h2>
-        <p class="lead">Your request has been submitted successfully.</p>
+        <p class="lead">
+            {% if success_message %}
+                {{ success_message }}
+            {% else %}
+                Your request has been submitted successfully.
+            {% endif %}
+        </p>
         <p class="mb-3">
             Our team is reviewing your request.<br>
             You will receive a confirmation via email or Telegram shortly.
