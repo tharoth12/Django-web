@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>SL Power Reminder</title>
+</head>
+<body style="font-family: Arial, sans-serif; color: #333;">
+    {% if reminder_type == 'rental_customer' %}
+        <h2>Rental Return Reminder</h2>
+        <p>Dear {{ booking.customer_name }},</p>
+        <p>This is a friendly reminder that your rental for <strong>{{ booking.product.title }}</strong> is due for return on <strong>{{ booking.return_date|date:"F d, Y" }}</strong>.</p>
+        <p><strong>Invoice Number:</strong> {{ booking.invoice_number }}</p>
+        <p>If you need to extend your rental or have any questions, please contact us at your earliest convenience.</p>
+        <p>Thank you for choosing {{ general_info.company_name }}!</p>
+        <br>
+        <p>Best regards,</p>
+        <p>The {{ general_info.company_name }} Team</p>
+    {% elif reminder_type == 'rental_admin' %}
+        <h2>Upcoming Rental Return Notification</h2>
+        <p>This is a reminder that the following rental is scheduled for return:</p>
+        <ul>
+            <li><strong>Customer:</strong> {{ booking.customer_name }}</li>
+            <li><strong>Product:</strong> {{ booking.product.title }}</li>
+            <li><strong>Invoice Number:</strong> {{ booking.invoice_number }}</li>
+            <li><strong>Return Date:</strong> {{ booking.return_date|date:"F d, Y" }}</li>
+        </ul>
+        <p>Please prepare for the equipment return and follow up with the customer if necessary.</p>
+    {% elif reminder_type == 'service_customer' %}
+        <h2>Service Appointment Reminder</h2>
+        <p>Dear {{ service.customer_name }},</p>
+        <p>This is a friendly reminder for your upcoming service appointment for your <strong>{{ service.machine_type }}</strong>, scheduled for <strong>{{ service.preferred_date|date:"F d, Y" }}</strong>.</p>
+        <p><strong>Service Type:</strong> {{ service.service_type }}</p>
+        <p>If you need to reschedule or have any questions, please contact us.</p>
+        <p>Thank you for choosing {{ general_info.company_name }}!</p>
+        <br>
+        <p>Best regards,</p>
+        <p>The {{ general_info.company_name }} Team</p>
+    {% elif reminder_type == 'service_admin' %}
+        <h2>Upcoming Service Appointment Notification</h2>
+        <p>This is a reminder for an upcoming service appointment:</p>
+        <ul>
+            <li><strong>Customer:</strong> {{ service.customer_name }}</li>
+            <li><strong>Machine:</strong> {{ service.machine_type }}</li>
+            <li><strong>Service Type:</strong> {{ service.service_type }}</li>
+            <li><strong>Appointment Date:</strong> {{ service.preferred_date|date:"F d, Y" }}</li>
+        </ul>
+        <p>Please ensure that the assigned technician and any necessary resources are prepared for the appointment.</p>
+    {% endif %}
+</body>
+</html> 

@@ -203,6 +203,7 @@ class RentalBooking(models.Model):
     submitted_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     invoice_number = models.CharField(max_length=50, blank=True, null=True, unique=True)
+    reminder_sent = models.BooleanField(default=False)
 
     def __str__(self):
         return f"{self.customer_name} - {self.order_type} - {self.product.title if self.product else 'No Product'}"
@@ -274,6 +275,7 @@ class ServiceRequest(models.Model):
     assigned_technician = models.CharField(max_length=100, blank=True, null=True)
     estimated_completion = models.DateTimeField(null=True, blank=True)
     actual_completion = models.DateTimeField(null=True, blank=True)
+    reminder_sent = models.BooleanField(default=False)
     
     # Timestamps
     submitted_at = models.DateTimeField(auto_now_add=True)
