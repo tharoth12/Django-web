@@ -597,7 +597,6 @@ def send_invoice_to_telegram(booking):
     from app.models import GeneralInfo
     from django.template.loader import get_template
     import requests
-    from django.conf import settings
     import os
 
     try:
@@ -803,7 +802,6 @@ def telegram_webhook(request):
                     from app.models import ServiceRequest
                     from django.shortcuts import get_object_or_404
                     from django.core.mail import send_mail
-                    from django.conf import settings
                     service_request = get_object_or_404(ServiceRequest, id=request_id)
                     if action == 'approve':
                         service_request.status = 'in_progress'
