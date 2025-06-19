@@ -393,3 +393,6 @@ else:
 
 # Load environment variables
 load_dotenv()
+
+# Google Sheets integration
+GOOGLE_SHEET_ID = os.environ.get('GOOGLE_SHEET_ID', 'your-google-sheet-id-here')
