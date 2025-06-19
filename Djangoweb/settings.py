@@ -41,6 +41,7 @@ ALLOWED_HOSTS = [
     'tharoth.pythonanywhere.com',
     'www.tharoth.pythonanywhere.com',
     '.pythonanywhere.com',  # Allow all pythonanywhere subdomains
+    '.ngrok-free.app',
 ]
 
 # Add production hosts if in production
