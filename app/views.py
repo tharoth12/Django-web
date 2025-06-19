@@ -106,7 +106,13 @@ def contact_form(request):
             "message": message,
             "time": timezone.now()
         }
-        html_content = render_to_string('email.html', context)
+        try:
+            html_content = render_to_string('email.html', context)
+            print("Email template rendered successfully")
+        except Exception as e:
+            print(f"Error rendering email template: {str(e)}")
+            messages.error(request, "There was an error processing your message. Please try again.")
+            return redirect('home')
 
         # Send email
         try:

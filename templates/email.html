@@ -14,6 +14,10 @@
         .header {
             text-align: center;
             margin-bottom: 30px;
+            background-color: #004aad;
+            color: white;
+            padding: 20px;
+            border-radius: 5px;
         }
         .logo {
             max-width: 150px;
@@ -23,6 +27,14 @@
             background-color: #f9f9f9;
             padding: 20px;
             border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        .message-details {
+            margin: 20px 0;
+            padding: 15px;
+            background-color: #fff;
+            border-left: 4px solid #004aad;
+            border-radius: 3px;
         }
         .booking-details {
             margin: 20px 0;
@@ -56,56 +68,108 @@
         .status-badge.rejected {
             background-color: #dc3545;
         }
+        .info-row {
+            margin: 10px 0;
+        }
+        .label {
+            font-weight: bold;
+            color: #004aad;
+        }
     </style>
 </head>
 <body>
-    <div class="header">
-        {% if general_info and general_info.company_logo %}
-            <img src="{{ general_info.company_logo.url }}" alt="{{ company_info.company_name }}" class="logo">
-        {% endif %}
-        <h2>{{ company_info.company_name }}</h2>
-    </div>
-
-    <div class="content">
-        <p>Dear {{ booking.customer_name }},</p>
-
-        <p>{% if approved %}
-            We are pleased to inform you that your request for <strong>{{ booking.product.title }}</strong> has been approved.
-        {% else %}
-            We regret to inform you that your request for <strong>{{ booking.product.title }}</strong> has been rejected.
-        {% endif %}</p>
-
-        <div class="booking-details {% if not approved %}rejected{% endif %}">
-            <h3>🧾 Booking Summary</h3>
-            <p><strong>Invoice Number:</strong> {{ booking.invoice_number }}</p>
-            <p><strong>Order Type:</strong> {{ booking.order_type|title }}</p>
-            <p><strong>Price:</strong> ${{ booking.price|floatformat:2 }}</p>
-            <p><strong>Status:</strong> <span class="status-badge {% if not approved %}rejected{% endif %}">{{ booking.status|title }}</span></p>
-            <p><strong>Submitted On:</strong> {{ booking.submitted_at|date:"Y-m-d H:i" }}</p>
-            
-            {% if not approved and booking.rejection_reason %}
-                <p><strong>❗ Reason for rejection:</strong> {{ booking.rejection_reason }}</p>
+    {% if booking %}
+        <!-- Booking Approval/Rejection Email -->
+        <div class="header">
+            {% if general_info and general_info.company_logo %}
+                <img src="{{ general_info.company_logo.url }}" alt="{{ company_info.company_name }}" class="logo">
             {% endif %}
+            <h2>{{ company_info.company_name }}</h2>
+        </div>
 
-            {% if approved %}
-                <p><strong>📎 Attachment:</strong> Please find the invoice attached to this email for your records.</p>
+        <div class="content">
+            <p>Dear {{ booking.customer_name }},</p>
+
+            <p>{% if approved %}
+                We are pleased to inform you that your request for <strong>{{ booking.product.title }}</strong> has been approved.
+            {% else %}
+                We regret to inform you that your request for <strong>{{ booking.product.title }}</strong> has been rejected.
+            {% endif %}</p>
+
+            <div class="booking-details {% if not approved %}rejected{% endif %}">
+                <h3>🧾 Booking Summary</h3>
+                <p><strong>Invoice Number:</strong> {{ booking.invoice_number }}</p>
+                <p><strong>Order Type:</strong> {{ booking.order_type|title }}</p>
+                <p><strong>Price:</strong> ${{ booking.price|floatformat:2 }}</p>
+                <p><strong>Status:</strong> <span class="status-badge {% if not approved %}rejected{% endif %}">{{ booking.status|title }}</span></p>
+                <p><strong>Submitted On:</strong> {{ booking.submitted_at|date:"Y-m-d H:i" }}</p>
+                
+                {% if not approved and booking.rejection_reason %}
+                    <p><strong>❗ Reason for rejection:</strong> {{ booking.rejection_reason }}</p>
+                {% endif %}
+
+                {% if approved %}
+                    <p><strong>📎 Attachment:</strong> Please find the invoice attached to this email for your records.</p>
+                {% endif %}
+            </div>
+
+            <p>Thank you for choosing {{ company_info.company_name }}. If you have any questions, feel free to contact us via Telegram at <a href="https://t.me/Generator_cambodia" class="contact-link">@Generator_cambodia</a>.</p>
+        </div>
+
+        <div class="footer">
+            <p>Best regards,<br>The {{ company_info.company_name }} Team</p>
+            {% if company_info.phone %}
+                <p>📞 {{ company_info.phone }}</p>
+            {% endif %}
+            {% if company_info.email %}
+                <p>📧 {{ company_info.email }}</p>
+            {% endif %}
+            {% if company_info.location %}
+                <p>📍 {{ company_info.location }}</p>
             {% endif %}
         </div>
 
-        <p>Thank you for choosing {{ company_info.company_name }}. If you have any questions, feel free to contact us via Telegram at <a href="https://t.me/Generator_cambodia" class="contact-link">@Generator_cambodia</a>.</p>
-    </div>
+    {% else %}
+        <!-- Contact Form Email -->
+        <div class="header">
+            <h2>📨 New Contact Message</h2>
+            <p>SL Power - Customer Inquiry</p>
+        </div>
 
-    <div class="footer">
-        <p>Best regards,<br>The {{ company_info.company_name }} Team</p>
-        {% if company_info.phone %}
-            <p>📞 {{ company_info.phone }}</p>
-        {% endif %}
-        {% if company_info.email %}
-            <p>📧 {{ company_info.email }}</p>
-        {% endif %}
-        {% if company_info.location %}
-            <p>📍 {{ company_info.location }}</p>
-        {% endif %}
-    </div>
+        <div class="content">
+            <div class="message-details">
+                <h3>📋 Message Details</h3>
+                
+                <div class="info-row">
+                    <span class="label">👤 From:</span> {{ name }}
+                </div>
+                
+                <div class="info-row">
+                    <span class="label">📧 Email:</span> {{ email }}
+                </div>
+                
+                <div class="info-row">
+                    <span class="label">📝 Subject:</span> {{ subject }}
+                </div>
+                
+                <div class="info-row">
+                    <span class="label">⏰ Time:</span> {{ time|date:"Y-m-d H:i" }}
+                </div>
+            </div>
+
+            <div class="message-details">
+                <h3>💬 Message Content</h3>
+                <p style="white-space: pre-wrap;">{{ message }}</p>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p><strong>SL Power Team</strong></p>
+            <p>📍 #15H, Prey Pring Tboung, Chom Chao III, Por Sen Chey Phnom Penh, Cambodia</p>
+            <p>📞 Tel: 855 16 856 460</p>
+            <p>📧 Email: info@slpower.com</p>
+            <p>💬 Telegram: <a href="https://t.me/Generator_cambodia" class="contact-link">@Generator_cambodia</a></p>
+        </div>
+    {% endif %}
 </body>
 </html>
