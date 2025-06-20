@@ -10,7 +10,7 @@ SCOPES = ['https://www.googleapis.com/auth/spreadsheets']
 
 def get_google_sheets_service():
     creds = None
-    token_path = os.path.join(settings.BASE_DIR, 'myenv', 'token.pickle')
+    token_path = os.path.join(settings.BASE_DIR, 'myenv', 'tokenemailandtelegram.txt')
     credentials_path = os.path.join(settings.BASE_DIR, 'myenv', 'credentials.json')
     if os.path.exists(token_path):
         with open(token_path, 'rb') as token:
@@ -34,22 +34,23 @@ def append_to_sheet(booking):
         spreadsheet_id = settings.GOOGLE_SHEET_ID
         range_name = 'Sheet1!A:Z'  # Adjust based on your sheet name and columns
 
-        # Improved row data formatting
+        # Only include important fields: Invoice Number, Customer Name, Phone, Email, Location, Type, Price, Payment Status, Status, Return Day/Buy Day
+        if booking.order_type == 'rent':
+            day_value = booking.return_date.strftime('%Y-%m-%d') if booking.return_date else 'N/A'
+        else:
+            day_value = booking.submitted_at.strftime('%Y-%m-%d')
+
         row_data = [
-            booking.invoice_number,
-            booking.order_type.capitalize(),
-            booking.customer_name.title(),
-            booking.phone,
-            booking.email.lower(),
-            booking.location.title() if booking.location else 'N/A',
-            booking.product.title if booking.product else 'N/A',
-            f"${booking.price:,.2f}",
-            booking.status.capitalize(),
-            booking.submitted_at.strftime('%Y-%m-%d %H:%M'),
-            'Yes' if getattr(booking, 'ats_panel', False) else 'No',
-            'Yes' if getattr(booking, 'onsite_technician', False) else 'No',
-            'Yes' if getattr(booking, 'power_backup_design', False) else 'No',
-            f"${booking.get_total_optional_services():,.2f}" if hasattr(booking, 'get_total_optional_services') else 'N/A',
+            booking.invoice_number,                                 # Invoice Number
+            booking.customer_name.title(),                         # Customer Name
+            booking.phone,                                         # Phone
+            booking.email.lower(),                                 # Email
+            booking.location.title() if booking.location else 'N/A', # Location
+            booking.order_type.capitalize(),                       # Type (Rent/Buy)
+            f"${booking.price:,.2f}",                            # Price
+            booking.payment_status.replace('_', ' ').capitalize(), # Payment Status
+            booking.status.capitalize(),                           # Status
+            day_value,                                             # Return Day or Buy Day
         ]
 
         body = {
