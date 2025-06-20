@@ -29,8 +29,10 @@ def get_google_sheets_service():
     return build('sheets', 'v4', credentials=creds)
 
 def append_to_sheet(booking):
+    print("append_to_sheet called for booking:", booking.invoice_number)
     try:
         service = get_google_sheets_service()
+        print("Google Sheets service created successfully")
         spreadsheet_id = settings.GOOGLE_SHEET_ID
         range_name = 'Sheet1!A:Z'  # Adjust based on your sheet name and columns
 
@@ -64,7 +66,7 @@ def append_to_sheet(booking):
             insertDataOption='INSERT_ROWS',
             body=body
         ).execute()
-
+        print("Google Sheets append result:", result)
         return True
     except Exception as e:
         print(f"Error appending to Google Sheet: {str(e)}")
