@@ -8,13 +8,36 @@ SCOPES = ['https://www.googleapis.com/auth/spreadsheets']
 def get_google_sheets_service():
     """Get Google Sheets service using Service Account credentials"""
     try:
-        # Path to your service account credentials file
-        credentials_path = os.path.join(settings.BASE_DIR, 'credentials.json')
+        # Try multiple possible paths for the credentials file
+        possible_paths = [
+            os.path.join(settings.BASE_DIR, 'credentials.json'),
+            os.path.join(settings.BASE_DIR, 'myenv', 'credentials.json'),
+            '/home/tharoth/Django web/credentials.json',  # PythonAnywhere specific path
+            '/home/tharoth/mysite/credentials.json',      # Alternative PythonAnywhere path
+        ]
         
-        if not os.path.exists(credentials_path):
-            print(f"Error: Credentials file not found at {credentials_path}")
-            print("Please download your Google Service Account credentials JSON file and save it as 'credentials.json' in the project root folder")
+        credentials_path = None
+        for path in possible_paths:
+            if os.path.exists(path):
+                credentials_path = path
+                break
+        
+        if not credentials_path:
+            print("Error: Credentials file not found!")
+            print("Searched in the following locations:")
+            for path in possible_paths:
+                print(f"  - {path}")
+            print("\nPlease:")
+            print("1. Download your Google Service Account credentials JSON file")
+            print("2. Upload it to your project root as 'credentials.json'")
+            print("3. Make sure the file has the correct permissions")
+            print("\nFor PythonAnywhere:")
+            print("  - Upload to: /home/yourusername/Django web/credentials.json")
+            print("\nFor Localhost:")
+            print("  - Place in: project_root/credentials.json")
             return None
+        
+        print(f"Found credentials file at: {credentials_path}")
         
         # Create credentials from service account file
         creds = Credentials.from_service_account_file(
@@ -29,6 +52,11 @@ def get_google_sheets_service():
         
     except Exception as e:
         print(f"Error creating Google Sheets service: {str(e)}")
+        print("Make sure:")
+        print("1. The credentials.json file is valid and complete")
+        print("2. The service account has access to the Google Sheet")
+        print("3. The Google Sheet ID is correct")
+        print("4. You have internet access (PythonAnywhere paid plan required)")
         return None
 
 def append_to_sheet(booking):

@@ -28,11 +28,21 @@ print(f"\nBASE_DIR : {BASE_DIR}\n")
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = 'django-insecure-n3714lj&sdfv_e9qw4)z+zv@%4ugleb&bp=cwgu$@n%$%r_-&1'
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.environ.get('DJANGO_DEBUG', 'True') == 'True'
+# Environment Detection
+def detect_environment():
+    """Detect if we're running on PythonAnywhere or localhost"""
+    # Check for PythonAnywhere specific indicators
+    if os.path.exists('/var/www') or 'pythonanywhere' in os.environ.get('HOSTNAME', ''):
+        return 'production'
+    elif os.environ.get('DJANGO_ENVIRONMENT'):
+        return os.environ.get('DJANGO_ENVIRONMENT')
+    else:
+        return 'development'
 
-# Get the environment (development or production)
-ENVIRONMENT = os.environ.get('DJANGO_ENVIRONMENT', 'development')
+ENVIRONMENT = detect_environment()
+
+# SECURITY WARNING: don't run with debug turned on in production!
+DEBUG = ENVIRONMENT == 'development'
 
 # Base allowed hosts
 ALLOWED_HOSTS = [
@@ -295,13 +305,25 @@ STATICFILES_DIRS = [
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
-# Configure whitenoise for production
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+# Configure static files storage based on environment
+if ENVIRONMENT == 'production':
+    # Production: Use WhiteNoise for static files
+    STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+    WHITENOISE_USE_FINDERS = True
+    WHITENOISE_MANIFEST_STRICT = False
+    WHITENOISE_ALLOW_ALL_ORIGINS = True
+else:
+    # Development: Use default Django static files handling
+    STATICFILES_STORAGE = 'django.contrib.staticfiles.storage.StaticFilesStorage'
 
-# Add this for serving static files in production
-WHITENOISE_USE_FINDERS = True
-WHITENOISE_MANIFEST_STRICT = False
-WHITENOISE_ALLOW_ALL_ORIGINS = True
+# Base URL for generating absolute URLs
+if ENVIRONMENT == 'production':
+    BASE_URL = 'https://tharoth.pythonanywhere.com'
+else:
+    BASE_URL = 'http://localhost:8000'
+
+print(f"Static files storage: {STATICFILES_STORAGE}")
+print(f"Base URL: {BASE_URL}")
 
 # Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
