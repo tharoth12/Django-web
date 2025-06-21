@@ -1,3 +1,10 @@
+import warnings
+import logging
+
+# Suppress Google API warnings
+warnings.filterwarnings('ignore', message='file_cache is only supported with oauth2client<4.0.0')
+logging.getLogger('googleapiclient.discovery_cache').setLevel(logging.ERROR)
+
 from google.oauth2.service_account import Credentials
 from googleapiclient.discovery import build
 import os.path
