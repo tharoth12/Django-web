@@ -1,81 +1,143 @@
-from google.oauth2.credentials import Credentials
-from google_auth_oauthlib.flow import InstalledAppFlow
-from google.auth.transport.requests import Request
+from google.oauth2.service_account import Credentials
 from googleapiclient.discovery import build
 import os.path
-import pickle
 from django.conf import settings
 
 SCOPES = ['https://www.googleapis.com/auth/spreadsheets']
 
 def get_google_sheets_service():
-    creds = None
-    token_path = os.path.join(settings.BASE_DIR, 'myenv', 'tokenemailandtelegram.txt')
-    credentials_path = os.path.join(settings.BASE_DIR, 'myenv', 'credentials.json')
-    if os.path.exists(token_path):
-        with open(token_path, 'rb') as token:
-            creds = pickle.load(token)
-    
-    if not creds or not creds.valid:
-        if creds and creds.expired and creds.refresh_token:
-            creds.refresh(Request())
-        else:
-            flow = InstalledAppFlow.from_client_secrets_file(
-                credentials_path, SCOPES)
-            creds = flow.run_local_server(port=0)
-        with open(token_path, 'wb') as token:
-            pickle.dump(creds, token)
-
-    return build('sheets', 'v4', credentials=creds)
+    """Get Google Sheets service using Service Account credentials"""
+    try:
+        # Path to your service account credentials file
+        credentials_path = os.path.join(settings.BASE_DIR, 'credentials.json')
+        
+        if not os.path.exists(credentials_path):
+            print(f"Error: Credentials file not found at {credentials_path}")
+            print("Please download your Google Service Account credentials JSON file and save it as 'credentials.json' in the project root folder")
+            return None
+        
+        # Create credentials from service account file
+        creds = Credentials.from_service_account_file(
+            credentials_path, 
+            scopes=SCOPES
+        )
+        
+        # Build the service
+        service = build('sheets', 'v4', credentials=creds)
+        print("Google Sheets service created successfully")
+        return service
+        
+    except Exception as e:
+        print(f"Error creating Google Sheets service: {str(e)}")
+        return None
 
 def append_to_sheet(booking):
     print("append_to_sheet called for booking:", booking.invoice_number)
     try:
         service = get_google_sheets_service()
-        print("Google Sheets service created successfully")
+        if not service:
+            print("Failed to create Google Sheets service")
+            return False
+            
         spreadsheet_id = settings.GOOGLE_SHEET_ID
+        if not spreadsheet_id or spreadsheet_id == 'your-google-sheet-id-here':
+            print("Error: GOOGLE_SHEET_ID not configured in settings")
+            print("Please add GOOGLE_SHEET_ID=your-actual-sheet-id to your environment variables")
+            return False
+            
         range_name = 'Sheet1!A:Z'  # Adjust based on your sheet name and columns
 
-        # Only include important fields: Invoice Number, Customer Name, Phone, Email, Location, Type, Price, Payment Status, Status, Return Day/Buy Day
+        # First, get all existing values to check if this invoice number already exists
+        result = service.spreadsheets().values().get(
+            spreadsheetId=spreadsheet_id,
+            range=range_name
+        ).execute()
+        
+        values = result.get('values', [])
+        print(f"Current sheet has {len(values)} rows")
+        
+        # Prepare the row data
         if booking.order_type == 'rent':
             day_value = booking.return_date.strftime('%Y-%m-%d') if booking.return_date else 'N/A'
         else:
             day_value = booking.submitted_at.strftime('%Y-%m-%d')
 
+        # Handle null invoice number
+        invoice_number = booking.invoice_number or f"TEMP-{booking.id}"
+        
         row_data = [
-            booking.invoice_number,                                 # Invoice Number
-            booking.customer_name.title(),                         # Customer Name
-            booking.phone,                                         # Phone
-            booking.email.lower(),                                 # Email
+            invoice_number,                                    # Invoice Number
+            booking.customer_name.title(),                     # Customer Name
+            booking.phone,                                     # Phone
+            booking.email.lower(),                             # Email
             booking.location.title() if booking.location else 'N/A', # Location
-            booking.order_type.capitalize(),                       # Type (Rent/Buy)
-            f"${booking.price:,.2f}",                            # Price
+            booking.order_type.capitalize(),                   # Type (Rent/Buy)
+            f"${booking.price:,.2f}" if booking.price else 'N/A', # Price
             booking.payment_status.replace('_', ' ').capitalize(), # Payment Status
-            booking.status.capitalize(),                           # Status
-            day_value,                                             # Return Day or Buy Day
+            booking.status.capitalize(),                       # Status
+            day_value,                                         # Return Day or Buy Day
         ]
 
-        body = {
-            'values': [row_data]
-        }
+        print(f"Prepared row data: {row_data}")
 
-        result = service.spreadsheets().values().append(
-            spreadsheetId=spreadsheet_id,
-            range=range_name,
-            valueInputOption='RAW',
-            insertDataOption='INSERT_ROWS',
-            body=body
-        ).execute()
-        print("Google Sheets append result:", result)
+        # Check if this invoice number already exists
+        existing_row_index = None
+        for i, row in enumerate(values):
+            if row and len(row) > 0 and row[0] == invoice_number:
+                existing_row_index = i + 1  # Sheets API is 1-indexed
+                break
+
+        if existing_row_index:
+            # Update existing row
+            print(f"Updating existing row {existing_row_index} for invoice {invoice_number}")
+            range_to_update = f'Sheet1!A{existing_row_index}:J{existing_row_index}'
+            body = {
+                'values': [row_data]
+            }
+            
+            result = service.spreadsheets().values().update(
+                spreadsheetId=spreadsheet_id,
+                range=range_to_update,
+                valueInputOption='RAW',
+                body=body
+            ).execute()
+        else:
+            # Append to the next available row (without inserting new rows)
+            print(f"Appending to next available row for invoice {invoice_number}")
+            next_row = len(values) + 1  # Next row after existing data
+            
+            range_to_append = f'Sheet1!A{next_row}:J{next_row}'
+            body = {
+                'values': [row_data]
+            }
+            
+            result = service.spreadsheets().values().update(
+                spreadsheetId=spreadsheet_id,
+                range=range_to_append,
+                valueInputOption='RAW',
+                body=body
+            ).execute()
+        
+        print("Google Sheets operation result:", result)
         return True
     except Exception as e:
-        print(f"Error appending to Google Sheet: {str(e)}")
+        print(f"Error updating Google Sheet: {str(e)}")
         return False
 
 def update_sheet_status(booking):
+    """Update both status and payment status in Google Sheets"""
     try:
         service = get_google_sheets_service()
+        if not service:
+            print("Failed to create Google Sheets service")
+            return False
+            
         spreadsheet_id = settings.GOOGLE_SHEET_ID
+        if not spreadsheet_id or spreadsheet_id == 'your-google-sheet-id-here':
+            print("Error: GOOGLE_SHEET_ID not configured in settings")
+            print("Please add GOOGLE_SHEET_ID=your-actual-sheet-id to your environment variables")
+            return False
+            
         range_name = 'Sheet1!A:Z'  # Adjust based on your sheet name and columns
 
         # First, get all values to find the row with matching invoice number
@@ -86,32 +148,171 @@ def update_sheet_status(booking):
         
         values = result.get('values', [])
         if not values:
+            print("No data found in Google Sheet")
             return False
+
+        # Handle null invoice number
+        invoice_number = booking.invoice_number or f"TEMP-{booking.id}"
+        print(f"Looking for invoice: {invoice_number}")
 
         # Find the row with matching invoice number
         row_index = None
         for i, row in enumerate(values):
-            if row and row[0] == booking.invoice_number:
-                row_index = i + 1  # Sheets API is 1-indexed
-                break
+            if row and len(row) > 0:
+                print(f"Row {i+1}: {row[0]} (looking for {invoice_number})")
+                if row[0] == invoice_number:
+                    row_index = i + 1  # Sheets API is 1-indexed
+                    break
 
         if row_index is None:
+            print(f"Could not find row for invoice {invoice_number}")
+            print("Available invoice numbers in sheet:")
+            for i, row in enumerate(values[:10]):  # Show first 10 rows
+                if row and len(row) > 0:
+                    print(f"  Row {i+1}: {row[0]}")
             return False
 
-        # Only update the value in the status column (column I, index 8)
-        range_to_update = f'Sheet1!I{row_index}'  # Column I is the status column
+        # Update both status (column I, index 8) and payment status (column H, index 7)
+        range_to_update = f'Sheet1!H{row_index}:I{row_index}'  # Columns H and I
         body = {
-            'values': [[booking.status.capitalize()]]
+            'values': [[
+                booking.payment_status.replace('_', ' ').capitalize(),  # Payment Status (H)
+                booking.status.capitalize()  # Status (I)
+            ]]
         }
 
-        service.spreadsheets().values().update(
+        print(f"Updating row {row_index} with status: {booking.status}, payment: {booking.payment_status}")
+
+        result = service.spreadsheets().values().update(
             spreadsheetId=spreadsheet_id,
             range=range_to_update,
             valueInputOption='RAW',
             body=body
         ).execute()
 
+        print(f"Updated Google Sheets for invoice {invoice_number}: Status={booking.status}, Payment={booking.payment_status}")
         return True
     except Exception as e:
         print(f"Error updating Google Sheet status: {str(e)}")
+        return False
+
+def update_payment_status(booking):
+    """Update only payment status in Google Sheets"""
+    try:
+        service = get_google_sheets_service()
+        if not service:
+            print("Failed to create Google Sheets service")
+            return False
+            
+        spreadsheet_id = settings.GOOGLE_SHEET_ID
+        if not spreadsheet_id or spreadsheet_id == 'your-google-sheet-id-here':
+            print("Error: GOOGLE_SHEET_ID not configured in settings")
+            print("Please add GOOGLE_SHEET_ID=your-actual-sheet-id to your environment variables")
+            return False
+            
+        range_name = 'Sheet1!A:Z'  # Adjust based on your sheet name and columns
+
+        # First, get all values to find the row with matching invoice number
+        result = service.spreadsheets().values().get(
+            spreadsheetId=spreadsheet_id,
+            range=range_name
+        ).execute()
+        
+        values = result.get('values', [])
+        if not values:
+            print("No data found in Google Sheet")
+            return False
+
+        # Handle null invoice number
+        invoice_number = booking.invoice_number or f"TEMP-{booking.id}"
+        print(f"Looking for invoice: {invoice_number}")
+
+        # Find the row with matching invoice number
+        row_index = None
+        for i, row in enumerate(values):
+            if row and len(row) > 0 and row[0] == invoice_number:
+                row_index = i + 1  # Sheets API is 1-indexed
+                break
+
+        if row_index is None:
+            print(f"Could not find row for invoice {invoice_number}")
+            return False
+
+        # Update only payment status (column H, index 7)
+        range_to_update = f'Sheet1!H{row_index}'  # Column H is payment status
+        body = {
+            'values': [[booking.payment_status.replace('_', ' ').capitalize()]]
+        }
+
+        print(f"Updating payment status for row {row_index}: {booking.payment_status}")
+
+        result = service.spreadsheets().values().update(
+            spreadsheetId=spreadsheet_id,
+            range=range_to_update,
+            valueInputOption='RAW',
+            body=body
+        ).execute()
+
+        print(f"Updated payment status in Google Sheets for invoice {invoice_number}: {booking.payment_status}")
+        return True
+    except Exception as e:
+        print(f"Error updating Google Sheet payment status: {str(e)}")
+        return False
+
+def update_invoice_number_in_sheet(booking):
+    """Update invoice number in Google Sheets when it gets generated"""
+    try:
+        service = get_google_sheets_service()
+        if not service:
+            print("Failed to create Google Sheets service")
+            return False
+            
+        spreadsheet_id = settings.GOOGLE_SHEET_ID
+        if not spreadsheet_id or spreadsheet_id == 'your-google-sheet-id-here':
+            print("Error: GOOGLE_SHEET_ID not configured in settings")
+            return False
+            
+        range_name = 'Sheet1!A:Z'
+
+        # Get all values to find the row
+        result = service.spreadsheets().values().get(
+            spreadsheetId=spreadsheet_id,
+            range=range_name
+        ).execute()
+        
+        values = result.get('values', [])
+        if not values:
+            return False
+
+        # Look for the row with TEMP-{booking.id} or the old invoice number
+        row_index = None
+        temp_invoice = f"TEMP-{booking.id}"
+        
+        for i, row in enumerate(values):
+            if row and len(row) > 0:
+                if row[0] == temp_invoice or row[0] == booking.invoice_number:
+                    row_index = i + 1
+                    break
+
+        if row_index is None:
+            print(f"Could not find row for booking {booking.id}")
+            return False
+
+        # Update the invoice number (column A)
+        range_to_update = f'Sheet1!A{row_index}'
+        body = {
+            'values': [[booking.invoice_number]]
+        }
+
+        result = service.spreadsheets().values().update(
+            spreadsheetId=spreadsheet_id,
+            range=range_to_update,
+            valueInputOption='RAW',
+            body=body
+        ).execute()
+
+        print(f"Updated invoice number in Google Sheets: {booking.invoice_number}")
+        return True
+    except Exception as e:
+        print(f"Error updating invoice number in Google Sheet: {str(e)}")
         return False 

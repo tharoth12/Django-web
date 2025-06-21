@@ -19,6 +19,7 @@ from app.models import (
 )
 from django.utils import timezone
 from app.views import send_telegram_message, send_invoice_to_telegram
+from app.utils import update_sheet_status, update_payment_status
 
 @admin.register(GeneralInfo)
 class GeneralInfoAdmin(admin.ModelAdmin):
@@ -212,7 +213,7 @@ class RentalBookingAdmin(admin.ModelAdmin):
         'submitted_at', 'updated_at', 'invoice_number',
         'deposit_amount', 'balance_amount'
     ]
-    actions = [export_to_excel, 'approve_orders', 'reject_orders']
+    actions = [export_to_excel, 'approve_orders', 'reject_orders', 'mark_as_paid', 'mark_as_pending_payment', 'mark_as_deposit_paid', 'mark_as_fully_paid']
 
     fieldsets = (
         ('Basic Information', {
@@ -246,6 +247,10 @@ class RentalBookingAdmin(admin.ModelAdmin):
                 order.status = 'approved'
                 order.save()
                 
+                # Update Google Sheets
+                from app.utils import update_sheet_status
+                update_sheet_status(order)
+                
                 # Send Telegram notification
                 message = f"""
 ✅ Order Approved!
@@ -277,6 +282,10 @@ class RentalBookingAdmin(admin.ModelAdmin):
                 order.status = 'rejected'
                 order.save()
                 
+                # Update Google Sheets
+                from app.utils import update_sheet_status
+                update_sheet_status(order)
+                
                 # Send Telegram notification
                 message = f"""
 ❌ Order Rejected!
@@ -294,6 +303,120 @@ class RentalBookingAdmin(admin.ModelAdmin):
                 
         self.message_user(request, f"{queryset.count()} orders were successfully rejected.")
     reject_orders.short_description = "Reject selected orders"
+
+    def mark_as_paid(self, request, queryset):
+        for order in queryset:
+            order.payment_status = 'paid'
+            order.save()
+            
+            # Update Google Sheets
+            update_payment_status(order)
+            
+            # Send Telegram notification
+            message = f"""
+💰 Payment Received!
+
+📋 Invoice: {order.invoice_number}
+👤 Customer: {order.customer_name}
+📞 Phone: {order.phone}
+📧 Email: {order.email}
+
+🔌 Product: {order.product.title if order.product else 'N/A'}
+💰 Total: ${order.price}
+💵 Amount Paid: ${order.price}
+
+🕒 Payment Date: {timezone.now().strftime('%Y-%m-%d %H:%M')}
+"""
+            send_telegram_message(message)
+            
+        self.message_user(request, f"{queryset.count()} orders were marked as paid.")
+    mark_as_paid.short_description = "Mark selected orders as paid"
+
+    def mark_as_pending_payment(self, request, queryset):
+        for order in queryset:
+            order.payment_status = 'pending_payment'
+            order.save()
+            
+            # Update Google Sheets
+            update_payment_status(order)
+            
+            # Send Telegram notification
+            message = f"""
+⏳ Payment Pending!
+
+📋 Invoice: {order.invoice_number}
+👤 Customer: {order.customer_name}
+📞 Phone: {order.phone}
+📧 Email: {order.email}
+
+🔌 Product: {order.product.title if order.product else 'N/A'}
+💰 Total: ${order.price}
+💵 Deposit (30%): ${order.deposit_amount}
+💳 Balance: ${order.balance_amount}
+
+🕒 Status Updated: {timezone.now().strftime('%Y-%m-%d %H:%M')}
+"""
+            send_telegram_message(message)
+            
+        self.message_user(request, f"{queryset.count()} orders were marked as pending payment.")
+    mark_as_pending_payment.short_description = "Mark selected orders as pending payment"
+
+    def mark_as_deposit_paid(self, request, queryset):
+        for order in queryset:
+            order.payment_status = 'deposit_paid'
+            order.save()
+            
+            # Update Google Sheets
+            update_payment_status(order)
+            
+            # Send Telegram notification
+            message = f"""
+💰 Deposit Paid!
+
+📋 Invoice: {order.invoice_number}
+👤 Customer: {order.customer_name}
+📞 Phone: {order.phone}
+📧 Email: {order.email}
+
+🔌 Product: {order.product.title if order.product else 'N/A'}
+💰 Total: ${order.price}
+💵 Deposit (30%): ${order.deposit_amount}
+💵 Balance: ${order.balance_amount}
+
+🕒 Deposit Paid: {timezone.now().strftime('%Y-%m-%d %H:%M')}
+"""
+            send_telegram_message(message)
+            
+        self.message_user(request, f"{queryset.count()} orders were marked as deposit paid.")
+    mark_as_deposit_paid.short_description = "Mark selected orders as deposit paid"
+
+    def mark_as_fully_paid(self, request, queryset):
+        for order in queryset:
+            order.payment_status = 'fully_paid'
+            order.save()
+            
+            # Update Google Sheets
+            update_payment_status(order)
+            
+            # Send Telegram notification
+            message = f"""
+💰 Fully Paid!
+
+📋 Invoice: {order.invoice_number}
+👤 Customer: {order.customer_name}
+📞 Phone: {order.phone}
+📧 Email: {order.email}
+
+🔌 Product: {order.product.title if order.product else 'N/A'}
+💰 Total: ${order.price}
+💵 Amount Paid: ${order.price}
+
+🕒 Payment Date: {timezone.now().strftime('%Y-%m-%d %H:%M')}
+"""
+            send_telegram_message(message)
+            
+        self.message_user(request, f"{queryset.count()} orders were marked as fully paid.")
+    mark_as_fully_paid.short_description = "Mark selected orders as fully paid"
 
 @admin.register(ServiceRequest)
 class ServiceRequestAdmin(admin.ModelAdmin):

@@ -209,9 +209,19 @@ class RentalBooking(models.Model):
         return f"{self.customer_name} - {self.order_type} - {self.product.title if self.product else 'No Product'}"
 
     def save(self, *args, **kwargs):
-        # Generate invoice number if not exists
+        # Check if this is a new record or if status is being changed to approved
+        is_new = self.pk is None
+        old_status = None
+        if not is_new:
+            try:
+                old_instance = RentalBooking.objects.get(pk=self.pk)
+                old_status = old_instance.status
+            except RentalBooking.DoesNotExist:
+                pass
+        
+        # Generate invoice number if not exists and status is approved
         if not self.invoice_number and self.status == 'approved':
-            self.invoice_number = f"INV-{timezone.now().strftime('%Y%m%d')}-{self.id:04d}"
+            self.invoice_number = f"INV-{timezone.now().strftime('%Y%m%d')}-{self.pk or 'NEW':04d}"
         
         # Calculate deposit and balance if price exists
         if self.price:
@@ -221,6 +231,20 @@ class RentalBooking(models.Model):
             self.balance_amount = price_decimal - self.deposit_amount
         
         super().save(*args, **kwargs)
+        
+        # Update Google Sheets after saving
+        try:
+            from .utils import update_sheet_status, update_invoice_number_in_sheet
+            
+            # If status changed to approved and invoice number was generated, update it in Google Sheets
+            if old_status != 'approved' and self.status == 'approved' and self.invoice_number:
+                update_invoice_number_in_sheet(self)
+            
+            # Update status in Google Sheets
+            update_sheet_status(self)
+            
+        except Exception as e:
+            print(f"Error updating Google Sheets in save method: {str(e)}")
 
     def get_total_optional_services(self):
         total = 0

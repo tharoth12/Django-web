@@ -12,16 +12,17 @@
     
         body {
             font-family: 'Khmer OS', Arial, sans-serif;
-            font-size: 12pt;
+            font-size: 10pt;
             margin: 0;
             padding: 0;
             background: #fff;
+            line-height: 1.2;
         }
     
         .invoice-container {
             width: 100%;
             margin: 0;
-            padding: 40px;
+            padding: 20px;
             box-sizing: border-box;
         }
     
@@ -30,100 +31,103 @@
             justify-content: space-between;
             align-items: flex-start;
             border-bottom: 2px solid #000;
-            padding-bottom: 10px;
+            padding-bottom: 5px;
+            margin-bottom: 10px;
         }
     
         .header-address {
             color: #004aad;
-            font-size: 11pt;
+            font-size: 9pt;
         }
     
         .invoice-info {
             border: 1px solid #000;
-            padding: 10px;
-            font-size: 12pt;
+            padding: 6px;
+            font-size: 9pt;
             text-align: left;
         }
     
         .title {
             text-align: center;
-            font-size: 20pt;
+            font-size: 16pt;
             font-weight: bold;
-            margin: 20px 0;
+            margin: 10px 0;
         }
     
         .customer-box {
             border: 1px solid #000;
-            padding: 10px;
-            margin-bottom: 20px;
+            padding: 6px;
+            margin-bottom: 10px;
+            font-size: 9pt;
         }
     
         table.details {
             width: 100%;
             border-collapse: collapse;
-            margin-bottom: 20px;
+            margin-bottom: 10px;
+            font-size: 9pt;
         }
     
         table.details th, table.details td {
             border: 1px solid #000;
-            padding: 8px;
+            padding: 4px 6px;
             text-align: left;
         }
     
         table.details th {
             background-color: #f2f2f2;
+            font-size: 8pt;
         }
     
         .right {
-        text-align: right;
-        white-space: nowrap;
+            text-align: right;
+            white-space: nowrap;
         }
 
-    
         .payment-summary {
             display: flex;
             justify-content: flex-start;
             align-items: flex-start;
-            gap: 16px;
+            gap: 10px;
             margin-top: 5px;
         }
 
         .qr-box {
             padding: 0;
-            width: 100px;
+            width: 80px;
             text-align: center;
-            font-size: 9pt;
+            font-size: 7pt;
             box-sizing: border-box;
         }
 
         .qr-box img {
-            width: 80px;
-            height: 80px;
-            margin-bottom: 4px;
+            width: 60px;
+            height: 60px;
+            margin-bottom: 2px;
         }
 
         .payment-details {
             display: flex;
             flex-direction: column;
             justify-content: flex-start;
-            font-size: 10pt;
-            margin-left: 8px;
-            min-width: 220px;
+            font-size: 8pt;
+            margin-left: 5px;
+            min-width: 180px;
         }
 
         .payment-method-label {
-            font-size: 10pt;
+            font-size: 8pt;
             font-weight: bold;
             margin-bottom: 2px;
         }
 
         .totals {
-            width: 260px;
-            font-size: 10pt;
+            width: 220px;
+            font-size: 8pt;
             border: 2px solid #000;
             padding: 0;
             margin-top: 0;
-            margin-left: 12px;
+            margin-left: 8px;
         }
 
         .totals table {
@@ -132,7 +136,7 @@
         }
     
         .totals td {
-            padding: 4px 6px;
+            padding: 2px 4px;
             text-align: left;
         }
 
@@ -140,7 +144,6 @@
             text-align: right;
         }
 
-    
         .totals th {
             background: #f2f2f2;
             text-align: left;
@@ -152,47 +155,55 @@
         }
     
         .notice {
-            margin-top: 20px;
+            margin-top: 8px;
             font-style: italic;
+            font-size: 8pt;
         }
     
         .signature {
             display: flex;
             justify-content: space-between;
-            margin-top: 50px;
-            gap: 10px;
+            margin-top: 20px;
+            gap: 8px;
             border: 1px solid #000;
-            padding: 18px 10px 10px 10px;
-            border-radius: 6px;
+            padding: 10px 6px 6px 6px;
+            border-radius: 4px;
             background: #fafbfc;
         }
     
         .signature-box {
             text-align: center;
             width: 48%;
+            font-size: 8pt;
         }
     
         .signature-line {
-            margin-top: 40px;
+            margin-top: 20px;
             border-top: 1px solid #000;
             width: 100%;
         }
-        .totals {
-        width: 340px;
-        border: 2px solid #000;
-        padding: 0;
-        font-size: 11pt;
-}
 
+        .rental-summary {
+            margin: 8px 0 12px 0;
+            font-size: 8pt;
+        }
+
+        /* Column width adjustments for better fit */
+        .col-no { width: 8%; }
+        .col-desc { width: 45%; }
+        .col-unit { width: 12%; }
+        .col-qty { width: 10%; }
+        .col-price { width: 12%; }
+        .col-amount { width: 13%; }
     </style>
     
 </head>
 <body>
 <div class="invoice-container">
-    <div style="font-size: 11pt; color: #004aad; margin-bottom: 8px;">Address: #15H, Prey Pring Tboung, Chom Chao III, Por Sen Chey Phnom Penh, Cambodia. Tel: 855 16 856 460</div>
+    <div style="font-size: 9pt; color: #004aad; margin-bottom: 5px;">Address: #15H, Prey Pring Tboung, Chom Chao III, Por Sen Chey Phnom Penh, Cambodia. Tel: 855 16 856 460</div>
     <div class="title kh" style="margin-top: 0;">វិក្កយបត្រ | INVOICE</div>
-    <div style="display: flex; justify-content: flex-start; gap: 10px; margin-bottom: 12px;">
-        <div class="customer-box" style="flex: 1; min-width: 220px; padding: 6px 10px; font-size: 11pt; margin-bottom: 0;">
+    <div style="display: flex; justify-content: flex-start; gap: 8px; margin-bottom: 8px;">
+        <div class="customer-box" style="flex: 1; min-width: 180px; padding: 4px 6px; font-size: 9pt; margin-bottom: 0;">
             <div class="kh">អតិថិជន: {{ booking.customer_name }}</div>
             Name: {{ booking.customer_name }}<br>
             <div class="kh">អាសយដ្ឋាន: {{ booking.location }}</div>
@@ -201,7 +212,7 @@
             <div class="kh">អ៊ីមែល:</div>
             E-mail: {{ booking.email }}
         </div>
-        <div class="invoice-info" style="flex: 1; min-width: 180px; padding: 6px 10px; font-size: 11pt; margin-bottom: 0;">
+        <div class="invoice-info" style="flex: 1; min-width: 150px; padding: 4px 6px; font-size: 9pt; margin-bottom: 0;">
             <div class="kh">លេខវិក្កយបត្រ៖ {{ booking.invoice_number }}</div>
             Invoice No. {{ booking.invoice_number }}<br>
             <div class="kh">កាលបរិច្ឆេទ៖ {{ booking.submitted_at|date:'d - F - Y' }}</div>
@@ -211,19 +222,19 @@
     <table class="details">
         <thead>
         <tr>
-            <th>ល.រ<br>No.</th>
-            <th>បរិយាយទំនិញ ឬ សេវាកម្ម<br>Description</th>
-            <th>ឯកតា<br>kVA</th>
-            <th>បរិមាណ<br>Qty</th>
-            <th>តម្លៃឯកតា<br>Unit Price</th>
-            <th>តម្លៃសរុប<br>Amount</th>
+            <th class="col-no">ល.រ<br>No.</th>
+            <th class="col-desc">បរិយាយទំនិញ ឬ សេវាកម្ម<br>Description</th>
+            <th class="col-unit">ឯកតា<br>kVA</th>
+            <th class="col-qty">បរិមាណ<br>Qty</th>
+            <th class="col-price">តម្លៃឯកតា<br>Unit Price</th>
+            <th class="col-amount">តម្លៃសរុប<br>Amount</th>
         </tr>
         </thead>
         <tbody>
         {% if booking.product %}
         <tr>
             <td>1</td>
-            <td>{{ booking.product.title }}<br><span style="font-size:11pt;"></span></td>
+            <td>{{ booking.product.title }}<br><span style="font-size:8pt;"></span></td>
             <td>{% if booking.product.kva %}{{ booking.product.kva }}{% else %}Unit{% endif %}</td>
             <td>1.00</td>
             <td class="right">$ {{ booking.price|floatformat:2 }}</td>
@@ -234,7 +245,7 @@
         <tr>
             <td>{% if booking.product %}2{% else %}1{% endif %}</td>
             <td>{{ booking.service_type }}<br>
-                <span style="font-size:11pt;">
+                <span style="font-size:8pt;">
                     Machine: {{ booking.machine_type }}<br>
                     Priority: {{ booking.priority|title }}<br>
                     Onsite: {% if booking.onsite_technician %}Yes{% else %}No{% endif %}
@@ -251,7 +262,7 @@
     <div class="payment-summary">
         <div class="qr-box">
             <img src="{{ qr_code_url }}" alt="QR Code" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
-            <div style="display: none; font-size: 8pt; color: #666;">QR Code Unavailable</div>
+            <div style="display: none; font-size: 6pt; color: #666;">QR Code Unavailable</div>
             <div>Scan to Pay</div>
         </div>
         <div class="payment-details">
@@ -261,7 +272,7 @@
             <div>Account No.: 003 360 695</div>
         </div>
         <div class="totals">
-            <table border="1" style="border-collapse: collapse; width: 100%; font-size: 10pt;">
+            <table border="1" style="border-collapse: collapse; width: 100%; font-size: 8pt;">
                 <tbody>
                     <tr>
                         <td colspan="5" style="text-align: left;"><strong>សរុប/Sub-Total</strong></td>
@@ -308,7 +319,7 @@
     {% endif %}
 
     {% if booking.order_type == 'rent' %}
-    <div class="rental-summary" style="margin: 12px 0 18px 0; font-size: 11pt;">
+    <div class="rental-summary">
         <strong>Period:</strong> {{ booking.rental_date|date:'Y-m-d' }} → {{ booking.return_date|date:'Y-m-d' }}
         ({{ months }} month{% if months > 1 %}s{% endif %})<br>
         <strong>Rent:</strong> ${{ booking.product.rent_price|floatformat:2 }}/month |
